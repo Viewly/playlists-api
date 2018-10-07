@@ -6,7 +6,7 @@ exports.up = async function(knex) {
     t.string('description');
     t.string('category');
     t.string('status');
-    t.integer('stars');
+    t.integer('stars', 0);
     t.timestamps(true, true);
   });
 };

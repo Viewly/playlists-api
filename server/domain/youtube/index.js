@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const _ = require('lodash');
 const creds = require(`./credentials.${process.env.NODE_ENV || 'staging'}`);
-const video = require('../video/index');
+
 
 const categories = fs.readFileSync(path.join(__dirname, './categories.txt'), 'utf-8');
 const yt_categories = {};
@@ -12,7 +12,6 @@ categories.split('\n').forEach(i => {
   const arr = i.split(' - ');
   yt_categories[arr[0].trim()] = arr[1];
 });
-console.log(yt_categories);
 
 function getAuthClient(){
   const privateKey = _.replace(creds.private_key, /\\n/g, '\n');
@@ -27,7 +26,6 @@ const service = google.youtube({
 
 auth.authorize((err) => {
   if (err) throw err;
-  getVideoMetadata('KYfADOlstwc').then(console.log)
 });
 
 
@@ -50,13 +48,12 @@ async function getVideoMetadata(video_id) {
             channel_title: metadata.channelTitle,
             channel_id: metadata.channelId,
             channel_thumbnail: data.thumbnail,
-            content_title: metadata.title,
-            content_thumbnail: metadata.thumbnails.default.url,
+            title: metadata.title,
+            thumbnail: metadata.thumbnails.default.url,
             duration: contentDetails.duration,
             definition: contentDetails.definition,
             category: yt_categories[metadata.categoryId]
           };
-          video.createOrUpdateSourceVideo('', res).then(console.log);
           resolve(res);
         });
       }
@@ -110,7 +107,5 @@ async function getChannelThumbnail(channel_id){
 //     })
 //   })
 // }
-
-
 
 module.exports = { getVideoMetadata};
