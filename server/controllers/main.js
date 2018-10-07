@@ -1,31 +1,33 @@
 const router = require('express').Router();
+const playlist = require('../domain/playlist/index');
 const youtube = require('../domain/youtube/index');
 const jwt = require('jsonwebtoken');
 const jwtPassword = process.env.JWT_PASSWORD;
 
 router.get('/playlists', (req, res) => {
-  youtube.getAuthUrl(req.query.is_content_creator).then(url => {
-    res.json({url})
+  playlist.getPlaylists().then(playlists => {
+    res.json(playlists);
   }).catch(err => res.json(err))
 });
 
 router.get('/playlist/:playlist_id', (req, res) => {
-  youtube.getAuthUrl(req.query.is_content_creator).then(url => {
-    res.json({url})
+  playlist.getPlaylist(req.params.playlist_id).then(playlist => {
+    res.json(playlist);
   }).catch(err => res.json(err))
 });
 
 router.post('/playlist', async (req, res) => {
-  users.registerOrLoginUser(req.body.code, req.body.is_content_creator).then(data => {
-    data.token = jwt.sign(data.user, jwtPassword);
-    res.json(data);
-  }).catch(err => res.json(err.message))
+  playlist.createPlaylist(req.body).then(id => {
+    res.json({id});
+  }).catch(err => res.json(err))
 });
 router.post('/playlist-reorder', async (req, res) => {
-  users.registerOrLoginUser(req.body.code, req.body.is_content_creator).then(data => {
-    data.token = jwt.sign(data.user, jwtPassword);
-    res.json(data);
-  }).catch(err => res.json(err.message))
+  playlist.reorderPlaylist(req.body).then(() => {
+    res.json({success: true});
+  }).catch(err => res.json(err))
+});
+router.get('/video-prefill', (req, res) => {
+
 });
 
 
