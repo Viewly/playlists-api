@@ -1,0 +1,40 @@
+{
+  "name": "stitch-playlists",
+  "version": "0.0.1",
+  "description": "Stitch playlists discovery",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server/app.js",
+    "test": "jasmine"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/Viewly/stitch-playlists.git"
+  },
+  "author": "Denko Mancheski",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Viewly/stitch-playlists/issues"
+  },
+  "homepage": "https://github.com/Viewly/stitch-playlists#readme",
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "cookie-parser": "^1.4.3",
+    "cors": "^2.8.4",
+    "cron": "^1.4.1",
+    "dotenv": "^5.0.1",
+    "express": "^4.16.3",
+    "googleapis": "^27.0.0",
+    "jasmine": "^3.1.0",
+    "jsonwebtoken": "^8.2.1",
+    "knex": "^0.14.4",
+    "lodash": "^4.17.10",
+    "morgan": "^1.9.0",
+    "pg": "^7.4.1",
+    "raven": "^2.6.3",
+    "request": "latest",
+    "serve-favicon": "^2.4.5",
+    "uuid": "^3.2.1",
+    "youtube-api": "^2.0.9"
+  }
+}
