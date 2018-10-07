@@ -12,6 +12,7 @@ require('dotenv').config();
 
 const wwwUtils = require('./utils/www.js');
 const mainController = require('./controllers/main');
+const adminController = require('./controllers/admin');
 console.log(process.env.NODE_ENV, "- ENV");
 /**
  * Setup express app
@@ -40,6 +41,7 @@ app.use('/app', express.static(path.join(__dirname, '../frontend')));
  * Wire controllers
  */
 app.use('/v1/api', mainController);
+app.use('/', adminController);
 //app.use(auth.verifyToken()); // Protected endpoints below
 
 

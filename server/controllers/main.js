@@ -25,6 +25,13 @@ router.post('/playlist', async (req, res) => {
   }).catch(err => res.json(err))
 });
 
+router.put('/playlist', (req, res) => {
+  const uuid = req.user_id || 'Viewly';
+  playlist.updatePlaylist(uuid, req.body).then(data => {
+    res.json({success: true})
+  }).catch(err => res.json(err))
+});
+
 router.delete('/playlist/:playlist_id', (req, res) => {
   const uuid = req.user_id || 'Viewly';
   playlist.deletePlaylist(uuid, req.params.playlist_id).then(() => {
@@ -48,7 +55,9 @@ router.post('/add-video', (req, res) => {
 });
 router.post('/remove-video', (req, res) => {
   const uuid = req.user_id || 'Viewly';
-  video.deleteVideo(uuid, req.body.playlist_id, req.body.video_id);
+  video.deleteVideo(uuid, req.body.playlist_id, req.body.video_id).then(data => {
+    res.json({success: true})
+  }).catch(err => res.json(err))
 });
 
 router.get('/video-prefill', (req, res) => {
@@ -59,9 +68,12 @@ router.get('/video-prefill', (req, res) => {
     youtube.getVideoMetadata(url).then(data => {
       video.createOrUpdateSourceVideo(uuid, data);
       res.json(data)
-    })
+    }).catch(err => res.json(err))
   }
+});
 
+router.get('/categories', (req, res) => {
+  res.json(youtube.getCategories());
 });
 
 

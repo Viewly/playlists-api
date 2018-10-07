@@ -7,6 +7,7 @@ exports.up = async function(knex) {
     t.string('youtube_channel_id');
     t.string('thumbnail_url');
     t.string('duration');
+    t.string('category');
     t.timestamps(true, true);
   });
 };

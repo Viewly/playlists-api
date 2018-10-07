@@ -11,6 +11,7 @@ async function createOrUpdateSourceVideo(user_id, video) {
       youtube_channel_id: video.channel_id,
       thumbnail_url: video.thumbnail_url,
       duration: video.duration,
+      category: video.category,
     }).returning('id');
   } else {
     return db.from('source_video').update({
@@ -29,7 +30,10 @@ async function addVideoToPlaylist(user_id, video) {
     where('youtube_video_id', video.video_id).
     reduce(i => i[0]);
 
-  const isOwner = (await db.select('*').from('playlist').where('id', video.playlist_id).reduce(i => i[0])).user_id === user_id;
+  const isOwner = (await db.select('*').
+    from('playlist').
+    where('id', video.playlist_id).
+    reduce(i => i[0])).user_id === user_id;
   if (source && isOwner) {
     const exists = await db.select('*').
       from('video').
@@ -58,7 +62,10 @@ async function addVideoToPlaylist(user_id, video) {
 
   } else {
     if (!isOwner) {
-      return {success: false, reason: 'Attempted to add a Video to a playlist that is not owned by this user.'};
+      return {
+        success: false,
+        reason: 'Attempted to add a Video to a playlist that is not owned by this user.',
+      };
     } else {
       throw new Error('Attempted to add a Video that is not in Source Video');
     }
@@ -66,15 +73,29 @@ async function addVideoToPlaylist(user_id, video) {
 }
 
 function getVideosForPlaylist(playlist_id) {
-  return db.from('video').select('*').where('playlist_id', playlist_id).orderBy('position');
+  const fields = [
+    'video.*',
+    'source_video.youtube_channel_id as channel_id',
+    'source_video.thumbnail_url',
+    'source_video.youtube_video_id as video_id',
+    'source_video.title as original_title',
+    'source_video.duration',
+    'source_video.category'];
+  return db.from('video').
+    select(db.raw(fields.join(','))).
+    join('source_video', 'source_video.id', 'video.source_video_id').
+    where('playlist_id', playlist_id).
+    orderBy('position');
 }
 
 function updateVideo(user_id, video) {
-  return db.from('video').update(video).where({video_id: video.id, user_id: user_id});
+  return db.from('video').
+    update(video).
+    where({ video_id: video.id, user_id: user_id });
 }
 
 function deleteVideo(user_id, playlist_id, video_id) {
-  return db.from('video').where({video_id, playlist_id, user_id}).del();
+  return db.from('video').where({ id: video_id, playlist_id, user_id }).del();
 }
 
 module.exports = {

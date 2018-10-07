@@ -10,7 +10,7 @@ const categories = fs.readFileSync(path.join(__dirname, './categories.txt'), 'ut
 const yt_categories = {};
 categories.split('\n').forEach(i => {
   const arr = i.split(' - ');
-  yt_categories[arr[0].trim()] = arr[1];
+  if (arr[0]) yt_categories[arr[0].trim()] = arr[1];
 });
 
 function getAuthClient(){
@@ -49,7 +49,7 @@ async function getVideoMetadata(video_id) {
             channel_id: metadata.channelId,
             channel_thumbnail: data.thumbnail,
             title: metadata.title,
-            thumbnail: metadata.thumbnails.default.url,
+            thumbnail_url: metadata.thumbnails.default.url,
             duration: contentDetails.duration,
             definition: contentDetails.definition,
             category: yt_categories[metadata.categoryId]
@@ -77,6 +77,10 @@ async function getChannelThumbnail(channel_id){
     })
   })
 
+}
+
+function getCategories(){
+  return Object.keys(yt_categories).map(key => ({id: key, name: yt_categories[key]}))
 }
 
 // async function getChannelDetails(user_id){
@@ -108,4 +112,4 @@ async function getChannelThumbnail(channel_id){
 //   })
 // }
 
-module.exports = { getVideoMetadata};
+module.exports = { getVideoMetadata, getCategories };
