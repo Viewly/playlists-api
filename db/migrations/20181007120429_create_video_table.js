@@ -7,7 +7,7 @@ exports.up = async function(knex) {
 
     t.integer('position');
     t.string('title');
-    t.string('description');
+    t.text('description');
     t.string('thumbnail_url');
 
     t.timestamps(true, true);

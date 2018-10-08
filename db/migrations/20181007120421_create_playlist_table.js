@@ -3,7 +3,7 @@ exports.up = async function(knex) {
     t.uuid('id');
     t.string('user_id');
     t.string('title');
-    t.string('description');
+    t.text('description');
     t.string('category');
     t.string('status');
     t.integer('stars', 0);

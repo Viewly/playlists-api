@@ -53,9 +53,11 @@
       $scope.state = 0;
       const user_id = 'Viewly';
       const serverEndpoint = '/v1/api';
+      $scope.s3endpoint = 'https://s3.eu-central-1.amazonaws.com/viewly-playlists-eu1/upload';
       $scope.playlistEditMode = false;
 
       $scope.loadPlaylists = () => {
+        clearUploadData();
         $scope.state = 0;
         $http.get(`${serverEndpoint}/playlists`).then(data => {
           $scope.playlists = data.data;
@@ -86,6 +88,7 @@
       };
 
       $scope.editPlaylist = (playlist) => {
+        clearUploadData();
         $scope.playlistEditMode = false;
         $scope.state = 2;
         $http.get(`${serverEndpoint}/playlist/${playlist.id}`).then(data => {
@@ -217,6 +220,7 @@
         const extension = data.name.split('.').pop();
         const fileGuid = guid();
         $scope[documentName] = data;
+        $scope[`${documentName}_uploading`] = true;
         $scope[`${documentName}_error`] = '';
         $scope[`${documentName}_uploaded`] = false;
         const key = `${fileGuid}_${documentName}.${extension}`;
@@ -229,6 +233,7 @@
             upload(url, data, documentName).then(() => {
               $scope[`${documentName}_upload`] = $sce.trustAsHtml('<p class="c-form-message c-form-message--success">Uploaded successfully!</p>');
               $scope[`${documentName}_uploaded`] = true;
+              $scope[`${documentName}_uploading`] = false;
               $scope[`${documentName}_error`] = '';
               urlReceiver.playlist_thumbnail_url = key;
               //$scope.user[`${documentName}_url`] = key;
@@ -297,6 +302,12 @@
         }
         return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
       }
+
+      function clearUploadData() {
+        $scope[`thumbnail_upload`] = $sce.trustAsHtml('');
+        $scope[`thumbnail_uploaded`] = false;
+        $scope['thumbnail'] = null;
+      }
       init();
     });
   </script>
@@ -320,11 +331,14 @@
       <h4>Current Playlists</h4>
       <ul class="list-group">
         <li ng-repeat="playlist in playlists"
-            class="list-group-item col-sm-4">
+            class="list-group-item col-sm-6">
           <div class="d-flex w-100 justify-content-between">
+            <img ng-if="playlist.playlist_thumbnail_url" style="float: right; height: 150px" src="{{s3endpoint + '/' + playlist.playlist_thumbnail_url}}" alt=""/>
+            <img ng-if="!playlist.playlist_thumbnail_url" style="float: right; height: 150px" src="https://s3.eu-central-1.amazonaws.com/viewly-playlists-eu1/upload/a6a9391c-2f46-3e9c-d3ef-7af0ea2297a9_thumbnail.png"/>
             <h3 class="mb-1">{{playlist.title}}</h3>
             <p class="mb-1">Description: {{playlist.description}}</p>
             <small>Created: {{playlist.created_at | date: 'dd.MM.yyyy'}}</small>
+
           </div>
           <div class="thin">
             <p>
@@ -393,7 +407,7 @@
         <!--</p>-->
         <div class="c-announcement__box centered" ng-if="thumbnail">
           <p>Thumbnail:</p>
-          <p><img class="thumbnail-img" ngf-thumbnail="thumbnail || '/thumb.jpg'"></p>
+          <p><img style="height: 200px" class="thumbnail-img" ngf-thumbnail="thumbnail || '/thumb.jpg'"></p>
           <button type="button" class="btn btn-sm btn-primary"
                   ng-click="clearFile('thumbnail')">Change
           </button>
@@ -408,23 +422,25 @@
           <option value="hidden">Hidden</option>
         </select>
       </div>
-      <button type="submit" class="btn btn-primary" ng-click="saveNewPlaylist()">Save</button>
+      <button type="submit" ng-disabled="thumbnail_uploading || !newPlaylist.title" class="btn btn-primary" ng-click="saveNewPlaylist()">Save</button>
     </form>
 
   </div>
   <div ng-if="state == 2">
     <div class="row">
       <div class="col-sm-6" ng-if="!playlistEditMode">
+        <img ng-if="activePlaylist.playlist_thumbnail_url" style="float: right; height: 150px" src="{{s3endpoint + '/' + activePlaylist.playlist_thumbnail_url}}" alt=""/>
+        <img ng-if="!activePlaylist.playlist_thumbnail_url" style="float: right; height: 150px" src="https://s3.eu-central-1.amazonaws.com/viewly-playlists-eu1/upload/a6a9391c-2f46-3e9c-d3ef-7af0ea2297a9_thumbnail.png"/>
         <h3>Playlist: {{activePlaylist.title}}</h3>
         <p>Description: {{activePlaylist.description}}</p>
-        <button style="float: right" class="btn btn btn-warning" ng-click="playlistEdit()">Edit/Reorder</button>
-        <button style="float: right" class="btn btn btn-danger" ng-click="playlistDelete()">Delete</button>
         <p>Category: {{activePlaylist.category}}</p>
         <p>Total duration: {{activePlaylist.totalDuration}}</p>
         <p>Publish status:
           <span style="color: green" ng-if="activePlaylist.status == 'published'" class="glyphicon glyphicon-ok"></span>
           <span style="color: red" ng-if="activePlaylist.status == 'hidden'" class="glyphicon glyphicon-remove"></span>
         </p>
+        <button style="float: right" class="btn btn btn-warning" ng-click="playlistEdit()">Edit/Reorder</button>
+        <button style="float: right" class="btn btn btn-danger" ng-click="playlistDelete()">Delete</button>
       </div>
       <div ng-if="playlistEditMode" class="row" style="padding: 20px">
         <form class="col-sm-6">
@@ -466,7 +482,7 @@
             <!--</p>-->
             <div class="c-announcement__box centered" ng-if="thumbnail">
               <p>Thumbnail:</p>
-              <p><img class="thumbnail-img" ngf-thumbnail="thumbnail || '/thumb.jpg'"></p>
+              <p><img style="height: 200px" class="thumbnail-img" ngf-thumbnail="thumbnail || '/thumb.jpg'"></p>
               <button type="button" class="btn btn-sm btn-primary"
                       ng-click="clearFile('thumbnail')">Change
               </button>
@@ -480,8 +496,11 @@
               <option value="hidden">Hidden</option>
             </select>
           </div>
-          <button type="submit" class="btn btn-primary" ng-click="updatePlaylist()">Save</button>
+          <button type="submit" class="btn btn-primary" ng-disabled="thumbnail_uploading || !activePlaylist.title" ng-click="updatePlaylist()">Save</button>
         </form>
+        <div class="col-sm-6">
+          <img ng-if="activePlaylist.playlist_thumbnail_url" src="{{s3endpoint + '/' + activePlaylist.playlist_thumbnail_url}}" style="height: 150px"/>
+        </div>
       </div>
     </div>
     <div class="row">
@@ -525,7 +544,7 @@
                 <label>Description</label>
                 <input ng-model="video.description" type="text" class="form-control">
               </div>
-              <button class="btn btn-default btn-sm" ng-click="updateVideo(video)">Save</button>
+              <button class="btn btn-default btn-sm" ng-disabled="!video.title" ng-click="updateVideo(video)">Save</button>
               <button class="btn btn-default btn-sm" ng-click="cancelUpdateVideo()">Cancel</button>
             </div>
           </li>
@@ -572,7 +591,7 @@
             <label>Description</label>
             <textarea rows="3" ng-model="newVideo.description" type="text" class="form-control"></textarea>
           </div>
-          <button type="submit" class="btn btn-primary" ng-click="addVideo()">Add</button>
+          <button ng-disabled="!newVideo.title" type="submit" class="btn btn-primary" ng-click="addVideo()">Add</button>
         </div>
       </form>
     </div>
