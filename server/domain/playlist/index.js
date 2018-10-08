@@ -69,6 +69,7 @@ function createPlaylist(user_id, playlist) {
     description: playlist.description,
     category: playlist.category,
     status: playlist.status || 'published',
+    playlist_thumbnail_url: playlist.playlist_thumbnail_url
   }).into('playlist').then(() => Promise.resolve(playlist_id));
 }
 
@@ -90,7 +91,8 @@ async function updatePlaylist(user_id, playlist) {
       title: playlist.title,
       description: playlist.description,
       category: playlist.category,
-      status: playlist.status
+      status: playlist.status,
+      playlist_thumbnail_url: playlist.playlist_thumbnail_url
     }).where({ user_id, id: playlist.id });
 }
 

@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const playlist = require('../domain/playlist/index');
 const youtube = require('../domain/youtube/index');
+const thumbnails = require('../domain/playlist/thumbnails');
 const video = require('../domain/video/index');
 const utils = require('../utils/helpers');
 const jwt = require('jsonwebtoken');
@@ -80,6 +81,13 @@ router.put('/video', (req, res) => {
   const uuid = req.user_id || 'Viewly';
   video.updateVideo(uuid, req.body).then(data => {
     res.json({success: true})
+  }).catch(err => res.json(err))
+});
+
+//Route used to get signed s3 url
+router.post('/upload-file', (req, res) => {
+  thumbnails.getSignedUrl(req.body).then(data => {
+    res.json(data)
   }).catch(err => res.json(err))
 });
 

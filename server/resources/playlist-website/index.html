@@ -1,11 +1,36 @@
 <html>
 <head>
   <!-- Latest compiled and minified CSS -->
+  <title>Playlist Builder</title>
   <link rel="stylesheet"
         href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
         integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
         crossorigin="anonymous">
   <style>
+    .list-group-item {
+      /*margin: 10px;*/
+    }
+    .c-form-message--success {
+      color: green;
+    }
+    .c-form-message--error {
+      color: red;
+    }
+    .upload-row {
+      text-align: center;
+    }
+    .drop-box {
+      border: 2px dashed #4a4a4a;
+      border-radius: 2px;
+      color: rgba(#fff, .8);
+      text-align: center;
+      padding: 30px;
+    }
+
+    .dragover {
+      opacity: 1 !important;
+      border: 2px dotted deepskyblue;
+    }
     .thin {
       margin-top: 10px;
     }
@@ -15,10 +40,11 @@
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.2/angular.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/danialfarid-angular-file-upload/12.2.13/ng-file-upload.js"></script>
   <script>
 
-    const app = angular.module('stitch-playlist-creator', []);
-    app.controller('main', ($scope, $http) => {
+    const app = angular.module('stitch-playlist-creator', ['ngFileUpload']);
+    app.controller('main', ($scope, $http, $sce, $q) => {
       $scope.playlists = [];
       $scope.categories = [];
       $scope.activePlaylist = {};
@@ -187,8 +213,91 @@
         return durationToReadable(start.toString())
       }
 
-      init();
+      $scope.uploadFiles = (documentName, data, urlReceiver) => {
+        const extension = data.name.split('.').pop();
+        const fileGuid = guid();
+        $scope[documentName] = data;
+        $scope[`${documentName}_error`] = '';
+        $scope[`${documentName}_uploaded`] = false;
+        const key = `${fileGuid}_${documentName}.${extension}`;
+        $http.post(`${serverEndpoint}/upload-file`, {
+          key,
+          type: data.type,
+        }).then((res) => {
+          const url = res.data;
+          if (url) {
+            upload(url, data, documentName).then(() => {
+              $scope[`${documentName}_upload`] = $sce.trustAsHtml('<p class="c-form-message c-form-message--success">Uploaded successfully!</p>');
+              $scope[`${documentName}_uploaded`] = true;
+              $scope[`${documentName}_error`] = '';
+              urlReceiver.playlist_thumbnail_url = key;
+              //$scope.user[`${documentName}_url`] = key;
+            }, (aborted) => {
+              if (!aborted) {
+                alert('Error while uploading. Please try again or contact support.');
+                $scope[`${documentName}_uploaded`] = false;
+                $scope[`${documentName}_upload`] = $sce.trustAsHtml('<p class="c-form-message c-form-message--error">Error while uploading. Please try again.</p>');
+              }
+            }, (evt) => {
+              const progressPercentage = parseInt((100.0 * evt.loaded) /
+                evt.total, 10);
+              $scope[`${documentName}_upload`] = $sce.trustAsHtml(`<p class="c-form-message">Uploading... ${progressPercentage}%..</p>`);
+            });
+          } else {
+            alert('Error while uploading. Please try again or contact support.');
+          }
+        });
+      };
 
+      $scope.clearFile = (documentName) => {
+        $scope[documentName] = '';
+        if ($scope[`${documentName}canc`]) {
+          $scope[`${documentName}canc`]();
+        }
+      };
+
+      function upload(url, file, documentName) {
+        const defer = $q.defer();
+        const xhr = new XMLHttpRequest();
+        let aborted = false;
+        xhr.onreadystatechange = () => {
+          if (xhr.readyState === 4) {
+            if (xhr.status === 200) {
+              try {
+                defer.resolve(true);
+              } catch (ex) {
+                defer.reject(ex);
+              }
+            } else {
+              defer.reject(aborted);
+            }
+          }
+        };
+
+        xhr.upload.onprogress = (event) => {
+          defer.notify(event);
+        };
+
+        xhr.open('PUT', url, true);
+        xhr.send(file);
+        $scope[`${documentName}canc`] = () => {
+          aborted = true;
+          xhr.abort();
+          $scope[`${documentName}_upload`] = $sce.trustAsHtml('');
+          $scope[`${documentName}_uploaded`] = false;
+        };
+        return defer.promise;
+      }
+
+      function guid() {
+        function s4() {
+          return Math.floor((1 + Math.random()) * 0x10000)
+          .toString(16)
+          .substring(1);
+        }
+        return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+      }
+      init();
     });
   </script>
 </head>
@@ -207,11 +316,11 @@
   </div>
 
   <div class="row" ng-if="state == 0">
-    <div class="col-sm-6">
+    <div class="col-sm-12">
       <h4>Current Playlists</h4>
       <ul class="list-group">
         <li ng-repeat="playlist in playlists"
-            class="list-group-item list-group-item-action flex-column align-items-start">
+            class="list-group-item col-sm-4">
           <div class="d-flex w-100 justify-content-between">
             <h3 class="mb-1">{{playlist.title}}</h3>
             <p class="mb-1">Description: {{playlist.description}}</p>
@@ -262,6 +371,37 @@
         </select>
       </div>
       <div class="form-group">
+        <label>Thumbnail</label>
+        <div class="upload-row row row-center">
+          <div class="col-sm-12">
+            <div ngf-select="uploadFiles('thumbnail', $file, newPlaylist)"
+                 ngf-drop="uploadFiles('thumbnail', $file, newPlaylist)" class="drop-box"
+                 ngf-drag-over-class="'dragover'"
+            >Drop Thumbmail image
+            </div>
+            <div ngf-no-file-drop>File Drag/Drop is not supported for this browser</div>
+          </div>
+          <div class="upload-row__or column column-20">or</div>
+          <div class="column">
+            <div class="btn btn-sm btn-primary"
+                 ngf-select="uploadFiles('thumbnail', $file, newPlaylist)">Choose a file
+            </div>
+          </div>
+        </div>
+        <!--<p class="c-form-message c-form-message&#45;&#45;error" ng-if="identity_file_error">-->
+          <!--[$identity_file_error$]-->
+        <!--</p>-->
+        <div class="c-announcement__box centered" ng-if="thumbnail">
+          <p>Thumbnail:</p>
+          <p><img class="thumbnail-img" ngf-thumbnail="thumbnail || '/thumb.jpg'"></p>
+          <button type="button" class="btn btn-sm btn-primary"
+                  ng-click="clearFile('thumbnail')">Change
+          </button>
+          <div ng-bind-html="thumbnail_upload" ng-if="thumbnail_upload"></div>
+        </div>
+        </div>
+
+        <div class="form-group">
         <label>Publish status:</label>
         <select ng-model="newPlaylist.status" class="form-control">
           <option value="published">Published</option>
@@ -302,6 +442,36 @@
               <option></option>
               <option ng-repeat="category in categories" ng-value="category.name">{{category.name}}</option>
             </select>
+          </div>
+          <div class="form-group">
+            <label>Thumbnail</label>
+            <div class="upload-row row row-center">
+              <div class="col-sm-12">
+                <div ngf-select="uploadFiles('thumbnail', $file, activePlaylist)"
+                     ngf-drop="uploadFiles('thumbnail', $file, activePlaylist)" class="drop-box"
+                     ngf-drag-over-class="'dragover'"
+                >Drop Thumbmail image
+                </div>
+                <div ngf-no-file-drop>File Drag/Drop is not supported for this browser</div>
+              </div>
+              <div class="upload-row__or column column-20">or</div>
+              <div class="column">
+                <div class="btn btn-sm btn-primary"
+                     ngf-select="uploadFiles('thumbnail', $file, activePlaylist)">Choose a file
+                </div>
+              </div>
+            </div>
+            <!--<p class="c-form-message c-form-message&#45;&#45;error" ng-if="identity_file_error">-->
+            <!--[$identity_file_error$]-->
+            <!--</p>-->
+            <div class="c-announcement__box centered" ng-if="thumbnail">
+              <p>Thumbnail:</p>
+              <p><img class="thumbnail-img" ngf-thumbnail="thumbnail || '/thumb.jpg'"></p>
+              <button type="button" class="btn btn-sm btn-primary"
+                      ng-click="clearFile('thumbnail')">Change
+              </button>
+              <div ng-bind-html="thumbnail_upload" ng-if="thumbnail_upload"></div>
+            </div>
           </div>
           <div class="form-group">
             <label>Publish status:</label>
