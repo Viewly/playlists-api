@@ -76,6 +76,12 @@ router.get('/categories', (req, res) => {
   res.json(youtube.getCategories());
 });
 
+router.put('/video', (req, res) => {
+  const uuid = req.user_id || 'Viewly';
+  video.updateVideo(uuid, req.body).then(data => {
+    res.json({success: true})
+  }).catch(err => res.json(err))
+});
 
 router.use((req, res, next) => {
   jwt.verify(req.headers['authorization'], jwtPassword, (err, decoded) => {

@@ -90,8 +90,8 @@ function getVideosForPlaylist(playlist_id) {
 
 function updateVideo(user_id, video) {
   return db.from('video').
-    update(video).
-    where({ video_id: video.id, user_id: user_id });
+    update({title: video.title, description: video.description}).
+    where({ id: video.id, user_id });
 }
 
 function deleteVideo(user_id, playlist_id, video_id) {

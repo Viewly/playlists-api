@@ -6,17 +6,17 @@
         integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
         crossorigin="anonymous">
 
-
-  <script
-    src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.2/angular.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.2/angular.js"></script>
   <script>
+
     const app = angular.module('stitch-playlist-creator', []);
     app.controller('main', ($scope, $http) => {
       $scope.playlists = [];
       $scope.categories = [];
       $scope.activePlaylist = {};
       $scope.newVideo = {};
-      $scope.newPlaylist = {};
+      $scope.newPlaylist = { status: "published" };
       $scope.state = 0;
       const user_id = 'Viewly';
       const serverEndpoint = '/v1/api';
@@ -38,7 +38,7 @@
       $scope.saveNewPlaylist = () => {
         $http.post(`${serverEndpoint}/playlist`, $scope.newPlaylist).then(data => {
           if (data.data.id) {
-            $scope.newPlaylist = {};
+            $scope.newPlaylist = { status: "published" };
             $scope.loadPlaylists();
           }
         });
@@ -57,6 +57,11 @@
         $scope.state = 2;
         $http.get(`${serverEndpoint}/playlist/${playlist.id}`).then(data => {
           $scope.activePlaylist = playlist = data.data;
+          $scope.activePlaylist.totalDuration = totalLength($scope.activePlaylist.videos);
+          $scope.activePlaylist.videos.map(i => {
+              i.duration = durationToReadable(i.duration);
+              return i;
+          })
         });
       };
 
@@ -142,9 +147,38 @@
           }
         })
       };
+
+      $scope.updateVideo = (video) => {
+        $http.put(`${serverEndpoint}/video`, video).then((data) => {
+          if (data.data.success) {
+            $scope.editPlaylist($scope.activePlaylist);
+          } else {
+            alert(data.data.reason || "An error occurred.");
+          }
+        })
+      };
+
+      $scope.cancelUpdateVideo = () => {
+        $scope.editPlaylist($scope.activePlaylist);
+      };
+
       function init() {
         $scope.loadPlaylists();
         $scope.loadCategories();
+        console.log(moment.duration().humanize(), "????")
+      }
+
+      function durationToReadable(durationString) {
+        const duration = moment.duration(durationString);
+        return moment.utc(duration.asMilliseconds()).format("HH:mm:ss");
+      }
+
+      function totalLength(videos) {
+        const start = moment.duration();
+        videos.forEach(i => {
+          start.add(moment.duration(i.duration));
+        });
+        return durationToReadable(start.toString())
       }
 
       init();
@@ -233,6 +267,7 @@
         <button style="float: right" class="btn btn btn-warning" ng-click="playlistEdit()">Edit/Reorder</button>
         <button style="float: right" class="btn btn btn-danger" ng-click="playlistDelete()">Delete</button>
         <p>Category: {{activePlaylist.category}}</p>
+        <p>Total duration: {{activePlaylist.totalDuration}}</p>
         <p>Publish status:
           <span style="color: green" ng-if="activePlaylist.status == 'published'" class="glyphicon glyphicon-ok"></span>
           <span style="color: red" ng-if="activePlaylist.status == 'hidden'" class="glyphicon glyphicon-remove"></span>
@@ -273,22 +308,42 @@
           <p ng-if="activePlaylist.videos.length == 0">This playlist doesnt have any videos. Start by adding one!</p>
           <li ng-repeat="video in activePlaylist.videos"
               class="list-group-item list-group-item-action flex-column align-items-start">
-            <img style="float: right" src="{{video.thumbnail_url}}" alt="">
-            <div class="d-flex w-100 justify-content-between">
-              <h5 class="mb-1"><a href="{{'https://www.youtube.com/watch?v=' + video.video_id}}" target="_blank">{{video.title}}</a></h5>
-              <small><p>ID: {{video.video_id}}</p></small>
-              <small><a href="{{'https://www.youtube.com/channel/' + video.channel_id}}" target="_blank">Channel</a></small>
+            <div ng-if="!video.editMode">
+              <img style="float: right" src="{{video.thumbnail_url}}" alt="">
+              <div class="d-flex w-100 justify-content-between">
+                <h5 class="mb-1"><a href="{{'https://www.youtube.com/watch?v=' + video.video_id}}" target="_blank">{{video.title}}</a></h5>
+                <small><p>ID: {{video.video_id}}</p></small>
+                <small><a href="{{'https://www.youtube.com/channel/' + video.channel_id}}" target="_blank">Channel</a></small>
+              </div>
+              <p class="mb-1">{{video.description}}</p>
+              <p>
+                <small>Category: {{video.category}}</small>
+              </p>
+              <p>
+                <small>Duration: {{video.duration}}</small>
+              </p>
+              <button class="btn btn-primary btn-sm"
+                      ng-click="deleteVideo(video)">Remove
+              </button>
+              <button class="btn btn-primary btn-sm"
+                      ng-click="video.editMode = true">Edit
+              </button>
+              <div ng-if="playlistEditMode" style="float: right">
+                <button ng-click="moveUp($index)" class="btn btn-sm btn-info"><span class="glyphicon glyphicon-circle-arrow-up"></span></button>
+                <button ng-click="moveDown($index)" class="btn btn-sm btn-info"><span class="glyphicon glyphicon-circle-arrow-down"></span></button>
+              </div>
             </div>
-            <p class="mb-1">{{video.description}}</p>
-            <p>
-              <small>Category: {{video.category}}</small>
-            </p>
-            <button class="btn btn-primary btn-sm"
-                    ng-click="deleteVideo(video)">Remove
-            </button>
-            <div ng-if="playlistEditMode" style="float: right">
-              <button ng-click="moveUp($index)" class="btn btn-sm btn-info"><span class="glyphicon glyphicon-circle-arrow-up"></span></button>
-              <button ng-click="moveDown($index)" class="btn btn-sm btn-info"><span class="glyphicon glyphicon-circle-arrow-down"></span></button>
+            <div ng-if="video.editMode">
+              <div class="form-group">
+                <label>Title</label>
+                <input ng-model="video.title" type="text" class="form-control">
+              </div>
+              <div class="form-group">
+                <label>Description</label>
+                <input ng-model="video.description" type="text" class="form-control">
+              </div>
+              <button class="btn btn-default btn-sm" ng-click="updateVideo(video)">Save</button>
+              <button class="btn btn-default btn-sm" ng-click="cancelUpdateVideo()">Cancel</button>
             </div>
           </li>
         </ul>
@@ -334,12 +389,6 @@
             <label>Description</label>
             <textarea rows="3" ng-model="newVideo.description" type="text" class="form-control"></textarea>
           </div>
-          <div class="form-check">
-            <input type="checkbox" class="form-check-input" id="exampleCheck1">
-            <label class="form-check-label"
-                   for="exampleCheck1">Published</label>
-          </div>
-
           <button type="submit" class="btn btn-primary" ng-click="addVideo()">Add</button>
         </div>
       </form>
