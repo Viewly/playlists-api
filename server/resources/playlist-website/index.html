@@ -7,6 +7,9 @@
         integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
         crossorigin="anonymous">
   <style>
+    .img-responsive {
+      height: 150px!important;
+    }
     .list-group-item {
       /*margin: 10px;*/
     }
@@ -329,42 +332,51 @@
   <div class="row" ng-if="state == 0">
     <div class="col-sm-12">
       <h4>Current Playlists</h4>
-      <ul class="list-group">
-        <li ng-repeat="playlist in playlists"
-            class="list-group-item col-sm-6">
-          <div class="d-flex w-100 justify-content-between">
-            <img ng-if="playlist.playlist_thumbnail_url" style="float: right; height: 150px" src="{{s3endpoint + '/' + playlist.playlist_thumbnail_url}}" alt=""/>
-            <img ng-if="!playlist.playlist_thumbnail_url" style="float: right; height: 150px" src="https://s3.eu-central-1.amazonaws.com/viewly-playlists-eu1/upload/a6a9391c-2f46-3e9c-d3ef-7af0ea2297a9_thumbnail.png"/>
-            <h3 class="mb-1">{{playlist.title}}</h3>
-            <p class="mb-1">Description: {{playlist.description}}</p>
-            <small>Created: {{playlist.created_at | date: 'dd.MM.yyyy'}}</small>
+      <div class="container">
+        <div class="row">
+          <ul class="thumbnails">
+            <div class="col-md-4" ng-repeat="playlist in playlists">
+              <div class="thumbnail">
+                <!--<img src="http://placehold.it/320x200" alt="ALT NAME" class="img-responsive" />-->
+                <img ng-if="playlist.playlist_thumbnail_url" class="img-responsive" src="{{s3endpoint + '/' + playlist.playlist_thumbnail_url}}" alt=""/>
+                <img ng-if="!playlist.playlist_thumbnail_url" class="img-responsive" src="https://s3.eu-central-1.amazonaws.com/viewly-playlists-eu1/upload/a6a9391c-2f46-3e9c-d3ef-7af0ea2297a9_thumbnail.png"/>
+                <div class="caption">
+                  <h3>{{playlist.title}}</h3>
+                  <p style="height: 50px; overflow: scroll"><b>Description:</b> {{playlist.description | limitTo: playlist.shown || 50}} <span ng-if="!playlist.shown && playlist.description.length > 50">...</span>
+                    <a ng-if="!playlist.shown && playlist.description.length > 50" ng-click="playlist.shown = 500">Show more</a>
+                    <a ng-if="playlist.shown == 500" ng-click="playlist.shown = 0">Show less</a>
+                  </p>
+                  <div class="thin">
+                    <p>
+                      <small>Category: {{playlist.category}}</small>
+                    </p>
+                    <p>
+                      <small>Author: {{playlist.user_id}}</small>
+                    </p>
+                    <p>
+                      <small>Total videos: {{playlist.noVideos}}</small>
+                    </p>
+                    <p>
+                      <small>Duration: {{playlist.duration}}</small>
+                    </p>
+                  </div>
+                  <small>Created: {{playlist.created_at | date: 'dd.MM.yyyy'}}</small>
+                  <p class="thin">
+                    <small>Publish status:
+                      <span style="color: green" ng-if="playlist.status == 'published'" class="glyphicon glyphicon-ok"></span>
+                      <span style="color: red" ng-if="playlist.status == 'hidden'" class="glyphicon glyphicon-remove"></span>
+                    </small>
+                  </p>
+                  <button class="btn btn-primary btn-sm btn-block"
+                          ng-click="editPlaylist(playlist)">Edit
+                  </button>
 
-          </div>
-          <div class="thin">
-            <p>
-              <small>Category: {{playlist.category}}</small>
-            </p>
-            <p>
-              <small>Author: {{playlist.user_id}}</small>
-            </p>
-            <p>
-              <small>Total videos: {{playlist.noVideos}}</small>
-            </p>
-            <p>
-              <small>Duration: {{playlist.duration}}</small>
-            </p>
-          </div>
-          <p class="thin">
-            <small>Publish status:
-              <span style="color: green" ng-if="playlist.status == 'published'" class="glyphicon glyphicon-ok"></span>
-              <span style="color: red" ng-if="playlist.status == 'hidden'" class="glyphicon glyphicon-remove"></span>
-            </small>
-          </p>
-          <button class="btn btn-primary btn-sm"
-                  ng-click="editPlaylist(playlist)">Edit
-          </button>
-        </li>
-      </ul>
+                </div>
+              </div>
+            </div>
+          </ul>
+        </div>
+      </div>
     </div>
   </div>
   <div class="row" ng-if="state == 1">
@@ -596,6 +608,7 @@
       </form>
     </div>
   </div>
+
 </div>
 </body>
 </html>
