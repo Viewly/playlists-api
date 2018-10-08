@@ -5,7 +5,14 @@
         href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
         integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
         crossorigin="anonymous">
-
+  <style>
+    .thin {
+      margin-top: 10px;
+    }
+    .thin p {
+      margin-bottom: 1px;
+    }
+  </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.2/angular.js"></script>
   <script>
@@ -165,7 +172,6 @@
       function init() {
         $scope.loadPlaylists();
         $scope.loadCategories();
-        console.log(moment.duration().humanize(), "????")
       }
 
       function durationToReadable(durationString) {
@@ -211,14 +217,21 @@
             <p class="mb-1">Description: {{playlist.description}}</p>
             <small>Created: {{playlist.created_at | date: 'dd.MM.yyyy'}}</small>
           </div>
-
-          <p>
-            <small>Category: {{playlist.category}}</small>
-          </p>
-          <p>
-            <small>Author: {{playlist.user_id}}</small>
-          </p>
-          <p>
+          <div class="thin">
+            <p>
+              <small>Category: {{playlist.category}}</small>
+            </p>
+            <p>
+              <small>Author: {{playlist.user_id}}</small>
+            </p>
+            <p>
+              <small>Total videos: {{playlist.noVideos}}</small>
+            </p>
+            <p>
+              <small>Duration: {{playlist.duration}}</small>
+            </p>
+          </div>
+          <p class="thin">
             <small>Publish status:
               <span style="color: green" ng-if="playlist.status == 'published'" class="glyphicon glyphicon-ok"></span>
               <span style="color: red" ng-if="playlist.status == 'hidden'" class="glyphicon glyphicon-remove"></span>

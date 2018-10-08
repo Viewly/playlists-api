@@ -1,3 +1,4 @@
+const moment = require('moment');
 const getFirst = (_, i) => {
   return i[0];
 };
@@ -20,4 +21,9 @@ async function timeout(seconds) {
   })
 }
 
-module.exports = { getFirst, getParameterByName, timeout };
+
+function durationToReadable(durationString) {
+  const duration = moment.duration(durationString);
+  return moment.utc(duration.asMilliseconds()).format("HH:mm:ss");
+}
+module.exports = { getFirst, getParameterByName, timeout, durationToReadable };
