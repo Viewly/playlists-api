@@ -49,7 +49,7 @@ async function getVideoMetadata(video_id) {
             channel_id: metadata.channelId,
             channel_thumbnail: data.thumbnail,
             title: metadata.title,
-            thumbnail_url: metadata.thumbnails.default.url,
+            thumbnail_url: metadata.thumbnails.maxres.url,
             duration: contentDetails.duration,
             definition: contentDetails.definition,
             category: yt_categories[metadata.categoryId]
@@ -72,7 +72,7 @@ async function getChannelThumbnail(channel_id){
       } else {
         const metadata = response.data.items[0].snippet;
         //TODO: Safe access
-        resolve({thumbnail: metadata.thumbnails.default.url});
+        resolve({thumbnail: metadata.thumbnails.high.url});
       }
     })
   })
