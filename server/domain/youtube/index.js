@@ -49,7 +49,7 @@ async function getVideoMetadata(video_id) {
             channel_id: metadata.channelId,
             channel_thumbnail: data.thumbnail,
             title: metadata.title,
-            thumbnail_url: metadata.thumbnails.maxres.url,
+            thumbnail_url: _.get(metadata, 'thumbnails.maxres.url', metadata.thumbnails.standard.url),
             duration: contentDetails.duration,
             definition: contentDetails.definition,
             category: yt_categories[metadata.categoryId]
