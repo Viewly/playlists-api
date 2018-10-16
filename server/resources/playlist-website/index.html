@@ -523,7 +523,7 @@
           <li ng-repeat="video in activePlaylist.videos"
               class="list-group-item list-group-item-action flex-column align-items-start">
             <div ng-if="!video.editMode">
-              <img style="float: right" src="{{video.thumbnail_url}}" alt="">
+              <img style="float: right; height: 150px" src="{{video.thumbnail_url}}" alt="">
               <div class="d-flex w-100 justify-content-between">
                 <h5 class="mb-1"><a href="{{'https://www.youtube.com/watch?v=' + video.video_id}}" target="_blank">{{video.title}}</a></h5>
                 <small><p>ID: {{video.video_id}}</p></small>
