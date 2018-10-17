@@ -4,7 +4,7 @@ const utils = require('../../utils/helpers');
 const uuid = require('uuid');
 const moment = require('moment');
 
-function getPlaylists() {
+function getPlaylists(query) {
   const fields = [
     'playlist.id as playlist_id',
     'playlist.title as playlist_title',
@@ -13,13 +13,22 @@ function getPlaylists() {
     'playlist.category',
     'playlist.user_id',
     'playlist.status',
+    'playlist.classification',
     'playlist.created_at',
     'video.id',
     'video.title',
     'video.description',
     'source_video.duration'
   ];
-  return db.select(db.raw(fields.join(','))).from('playlist').leftJoin('video', 'video.playlist_id', 'playlist.id').leftJoin('source_video', 'video.source_video_id', 'source_video.id').orderBy('playlist.created_at', 'desc')
+  return db.select(db.raw(fields.join(','))).from('playlist')
+  .leftJoin('video', 'video.playlist_id', 'playlist.id')
+  .leftJoin('source_video', 'video.source_video_id', 'source_video.id')
+  .orderBy('playlist.created_at', 'desc')
+  .modify((q) => {
+    if (query && query.classification){
+      q.where('playlist.classification', query.classification)
+    }
+  })
     .then(data => {
       const playlistMap = {};
       data.map(i => {
@@ -30,6 +39,7 @@ function getPlaylists() {
             title: i.playlist_title,
             playlist_thumbnail_url: i.playlist_thumbnail_url,
             description: i.playlist_description,
+            classification: i.classification,
             category: i.category,
             duration: moment.duration(),
             created_at: i.created_at,
@@ -94,7 +104,8 @@ async function updatePlaylist(user_id, playlist) {
       description: playlist.description,
       category: playlist.category,
       status: playlist.status,
-      playlist_thumbnail_url: playlist.playlist_thumbnail_url
+      playlist_thumbnail_url: playlist.playlist_thumbnail_url,
+      classification: playlist.classification
     }).where({ user_id, id: playlist.id });
 }
 
