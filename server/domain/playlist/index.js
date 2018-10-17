@@ -25,8 +25,10 @@ function getPlaylists(query) {
   .leftJoin('source_video', 'video.source_video_id', 'source_video.id')
   .orderBy('playlist.created_at', 'desc')
   .modify((q) => {
-    if (query && query.classification){
-      q.where('playlist.classification', query.classification)
+    if (query){
+      let search = {};
+      Object.keys(query).forEach(key => { search['playlist.' + key] = query[key]});
+      q.where(search)
     }
   })
     .then(data => {
