@@ -41,6 +41,7 @@ async function getVideoMetadata(video_id) {
         reject(err);
       } else {
         const metadata = response.data.items[0].snippet;
+        const thumbnails = metadata.thumbnails;
         const contentDetails = response.data.items[0].contentDetails;
         getChannelThumbnail(metadata.channelId).then(data => {
           const res = {
@@ -49,7 +50,7 @@ async function getVideoMetadata(video_id) {
             channel_id: metadata.channelId,
             channel_thumbnail: data.thumbnail,
             title: metadata.title,
-            thumbnail_url: _.get(metadata, 'thumbnails.maxres.url', metadata.thumbnails.standard.url),
+            thumbnail_url: (thumbnails.maxres || thumbnails.high || thumbnails.medium || thumbnails.default).url,
             duration: contentDetails.duration,
             definition: contentDetails.definition,
             category: yt_categories[metadata.categoryId]
@@ -72,7 +73,7 @@ async function getChannelThumbnail(channel_id){
       } else {
         const metadata = response.data.items[0].snippet;
         //TODO: Safe access
-        resolve({thumbnail: metadata.thumbnails.high.url});
+        resolve({thumbnail: (metadata.thumbnails.standard || metadata.thumbnails.default).url});
       }
     })
   })
