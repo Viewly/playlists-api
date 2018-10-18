@@ -197,6 +197,22 @@
         })
       };
 
+      $scope.loadSuggestions = () => {
+        $http.get(`${serverEndpoint}/suggestions`).then((data) => {
+          $scope.suggestions = data.data;
+        })
+      };
+
+      $scope.updateSuggestionStatus = (suggestion) => {
+        $http.put(`${serverEndpoint}/suggestion`, suggestion).then((data) => {
+          if (data.data.success) {
+            $scope.loadSuggestions();
+          } else {
+            alert(data.data.reason || "An error occurred.");
+          }
+        })
+      };
+
       $scope.cancelUpdateVideo = () => {
         $scope.editPlaylist($scope.activePlaylist);
       };
@@ -204,6 +220,7 @@
       function init() {
         $scope.loadPlaylists();
         $scope.loadCategories();
+        $scope.loadSuggestions();
       }
 
       function durationToReadable(durationString) {
@@ -325,6 +342,9 @@
       </button>
       <button class="btn btn-sm btn-primary" ng-show="state !== 0" ng-click="viewPlaylists()">View
         Playlists
+      </button>
+      <button class="btn btn-sm btn-warning" ng-show="state !== 3" ng-click="state = 3">View
+        Requests
       </button>
     </div>
   </div>
@@ -632,7 +652,89 @@
       </form>
     </div>
   </div>
+  <div ng-if="state === 3">
+    <div class="row">
+      <div class="col-sm-6">
+        <h4>Suggestions</h4>
+        <button class="btn btn-sm btn-default" ng-click="loadSuggestions()">Refresh</button>
+        <ul class="list-group">
+          <li ng-repeat="suggestion in suggestions"
+              class="list-group-item list-group-item-action flex-column align-items-start">
+            <div>
+              <div class="d-flex w-100 justify-content-between">
+                <p>Type: {{suggestion.type}}</p>
+                <p>Title: {{suggestion.title}}</p>
+                <p>Description: {{suggestion.description}}</p>
+                <p>Email: {{suggestion.email}}</p>
+                <p>Status: <b>{{suggestion.status}}</b></p>
+                <p>URL: {{suggestion.url}}</p>
+                <p>Playlist: <a target="_blank" href="{{'https://vidflow.io/playlist/' + suggestion.playlist_id}}">{{suggestion.playlist_id}}</a></p>
+              </div>
+              <button class="btn btn-primary btn-sm"
+                      ng-click="suggestion.editMode = true">Edit
+              </button>
+            </div>
+            <div ng-if="suggestion.editMode">
+              <div class="form-group">
+                <label>Status</label>
+                <select ng-model="suggestion.status" class="form-control">
+                  <option></option>
+                  <option ng-value="'approved'">Approved</option>
+                  <option ng-value="'rejected'">Rejected</option>
+                </select>
+              </div>
+              <button class="btn btn-default btn-sm" ng-click="updateSuggestionStatus(suggestion)">Save</button>
+              <button class="btn btn-default btn-sm" ng-click="suggestion.editMode = false; loadSuggestions()">Cancel</button>
+            </div>
+          </li>
+        </ul>
 
+      </div>
+      <form class="col-sm-6">
+        <h3>Add video</h3>
+        <div class="form-group">
+          <label>Youtube URL</label>
+          <input ng-model="newVideo.url" type="text" class="form-control">
+          <button class="btn btn-success" ng-click="loadYoutubeUrl()">Load URL
+          </button>
+        </div>
+        <div class="row" ng-if="newVideo.video_id">
+          <div class="col-sm-12">
+            <div class="card text-white bg-info" style="padding: 20px">
+              <div class="card-body">
+                <h3>{{newVideo.title}}</h3>
+                <h4><i>Channel title:</i> <b>{{newVideo.channel_title}}</b></h4>
+                <h4><i>Duration: </i><b>{{newVideo.duration}}</b></h4>
+                <h4><i>Category: </i><b>{{newVideo.category}}</b></h4>
+                <h4><i>ID: </i><b>{{newVideo.video_id}}</b></h4>
+              </div>
+              <div class="row">
+                <div class="col-sm-6" ng-if="newVideo.thumbnail_url">
+                  <h4>Thumbnail:</h4>
+                  <img style="height: 150px" src="{{newVideo.thumbnail_url}}" alt="">
+                </div>
+                <div class="col-sm-6" ng-if="newVideo.channel_thumbnail">
+                  <h4>Channel Thumbnail:</h4>
+                  <img style="height: 150px" src="{{newVideo.channel_thumbnail}}" alt="">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div ng-if="newVideo.video_id">
+          <div class="form-group" style="margin-top: 10px">
+            <label>Title</label>
+            <input ng-model="newVideo.title" type="text" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea rows="3" ng-model="newVideo.description" type="text" class="form-control"></textarea>
+          </div>
+          <button ng-disabled="!newVideo.title" type="submit" class="btn btn-primary" ng-click="addVideo()">Add</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 </body>
 </html>

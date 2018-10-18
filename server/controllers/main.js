@@ -3,6 +3,7 @@ const playlist = require('../domain/playlist/index');
 const youtube = require('../domain/youtube/index');
 const thumbnails = require('../domain/playlist/thumbnails');
 const video = require('../domain/video/index');
+const common = require('../domain/common/index');
 const utils = require('../utils/helpers');
 const jwt = require('jsonwebtoken');
 const jwtPassword = process.env.JWT_PASSWORD;
@@ -88,6 +89,24 @@ router.put('/video', (req, res) => {
 router.post('/upload-file', (req, res) => {
   thumbnails.getSignedUrl(req.body).then(data => {
     res.json(data)
+  }).catch(err => res.json(err))
+});
+
+router.get('/suggestions', (req, res) => {
+  common.fetchSuggestions().then(data => {
+    res.json(data);
+  }).catch(err => res.json(err))
+});
+
+router.post('/suggestion', (req, res) => {
+  common.saveSuggestion(req.body).then(data => {
+    res.json({success: true});
+  }).catch(err => res.json(err))
+});
+
+router.put('/suggestion', (req, res) => {
+  common.updateSuggestion(req.body).then(data => {
+    res.json({success: true});
   }).catch(err => res.json(err))
 });
 
