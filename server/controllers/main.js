@@ -8,7 +8,7 @@ const jwt = require('jsonwebtoken');
 const jwtPassword = process.env.JWT_PASSWORD;
 
 router.get('/playlists', (req, res) => {
-  playlist.getPlaylists(req.query).then(playlists => {
+  playlist.getPlaylists(req.query, req.headers).then(playlists => {
     res.json(playlists);
   }).catch(err => res.json(err))
 });

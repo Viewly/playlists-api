@@ -4,7 +4,7 @@ const utils = require('../../utils/helpers');
 const uuid = require('uuid');
 const moment = require('moment');
 
-function getPlaylists(query) {
+function getPlaylists(query, headers) {
   const fields = [
     'playlist.id as playlist_id',
     'playlist.title as playlist_title',
@@ -24,11 +24,22 @@ function getPlaylists(query) {
   .leftJoin('video', 'video.playlist_id', 'playlist.id')
   .leftJoin('source_video', 'video.source_video_id', 'source_video.id')
   .orderBy('playlist.created_at', 'desc')
-  .modify((q) => {
+  .modify(async (q) => {
     if (query){
       let search = {};
+      const title = query.title;
+      delete query.title;
       Object.keys(query).forEach(key => { search['playlist.' + key] = query[key]});
-      q.where(search)
+      q.where(search);
+      if (title) {
+        q.where('playlist.title', 'LIKE', `%${title}%`);
+        let log = {keyword: title};
+        if (headers) {
+          log.identifier = headers.identifier;
+          log.email = headers.email;
+        }
+        await db.insert(log).into('searchlog');
+      }
     }
   })
     .then(data => {
