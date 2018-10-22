@@ -7,7 +7,8 @@ function saveSuggestion(suggestion) {
     description: suggestion.description,
     url: suggestion.url,
     email: suggestion.email,
-    playlist_id: suggestion.playlist_id
+    playlist_id: suggestion.playlist_id,
+    category: suggestion.category
   }).into('suggestion');
 }
 
