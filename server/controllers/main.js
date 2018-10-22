@@ -110,6 +110,11 @@ router.put('/suggestion', (req, res) => {
   }).catch(err => res.json(err))
 });
 
+router.get('/searchlog', (req, res) => {
+  common.fetchSearchlog().then(data => {
+    res.json(data);
+  }).catch(err => res.json(err))
+});
 router.use((req, res, next) => {
   jwt.verify(req.headers['authorization'], jwtPassword, (err, decoded) => {
     if (err) res.json({error: 'Unauthorized'});
