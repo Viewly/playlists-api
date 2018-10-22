@@ -58,8 +58,6 @@ const service = google.youtube({
 
 auth.authorize((err) => {
   if (err) throw err;
-
-  getAuthUrl().then(console.log)
 });
 
 
@@ -143,4 +141,4 @@ function getUserInfoByCode(code){
 
 
 
-module.exports = { getVideoMetadata, getCategories, getAccessToken, getUserInfoByCode };
+module.exports = { getVideoMetadata, getCategories, getAuthUrl, getUserInfoByCode };

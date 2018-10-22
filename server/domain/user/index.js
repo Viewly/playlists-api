@@ -1,6 +1,6 @@
 const db = require('../../../db/knex');
 const helpers = require('../../utils/helpers');
-const jwtPassword = process.env.JWT_PASSWORD;
+const moment = require('moment');
 const jwt = require('jsonwebtoken');
 const youtube = require('../youtube/index');
 
@@ -48,6 +48,7 @@ async function registerUser(user){
           avatar_url: user.avatar_url,
           g_access_token: user.g_access_token,
           g_refresh_token: user.g_refresh_token,
+          email_confirmed: !!user.g_access_token
         }).into('user');
 
         return { success: true, user, registered: true };
@@ -67,11 +68,59 @@ async function loginUser(email, password) {
   }
 }
 
-function resetPasswordRequest() {}
+async function resetPasswordRequest(email) {
+  const exists = await userExists(email);
+  if (!exists) return { success: false, message: "The provided email does not seem to be registered with us." };
+  const uuid = helpers.generateUuid();
+  await db.update({
+    password_reset_token: uuid,
+    password_reset_token_expiry: moment(new Date()).add(24, 'hours')
+  }).from('user').where('email', email);
+  //Send email here;
+  return { success: true, message: "Reset password link has been sent to your email." };
+}
 
-function resetPasswordProcess() {}
+async function resetPasswordProcess(password_reset_token, password) {
+  const password_hash = await helpers.createBcryptHash(password);
+  const exists = await db.select('*').from('user').where('password_reset_token', password_reset_token).reduce(helpers.getFirst);
+  if (exists) {
+    if (moment(exists.password_reset_token_expiry) > moment(new Date())) {
+      await db.update({
+        password_reset_token: null,
+        password_reset_token_expiry: null,
+        password_hash
+      }).from('user').where('email', exists.email);
+      return { success: true, message: "Password changed successfully!" }
+    } else {
+      return { success: false, message: "Link is expired. Please request a new link." }
+    }
+  } else {
+    return { success: false, message: "Link is invalid." }
+  }
 
-function changePassword() {}
+}
+
+function confirmEmail(email_confirm_token) {
+  return db.from('user').update({
+    email_confirmed: true
+  }).where('email_confirm_token', email_confirm_token)
+}
+
+async function sendConfirmEmailLink(email) {
+  const user = await userExists(email);
+  if (user) {
+    if (!user.email_confirmed) {
+      const uuid = helpers.generateUuid();
+      await db.from('user').update('email_confirm_token', uuid).where('email', email);
+      //Send email with the uuid
+      return { success: true, message: "An email with confirmation link has been sent." }
+    } else {
+      return { success: false, message: "Email already confirmed." }
+    }
+  } else {
+    return { success: false, message: "A user with this email does not exist." }
+  }
+}
 
 function updateUserDetails(user) {
   return db.from('user').update({
@@ -90,12 +139,25 @@ function updateUserPassword(user_id, hash){
 }
 
 function getCleanUserAndJwt(user) {
-  delete user.g_access_token;
-  delete user.g_refresh_token;
-  delete user.password_hash;
-  delete user.updated_at;
-  user.jwt = jwt.sign(user, process.env.JWT_PASSWORD);
-  return user;
+  const data = {
+    id: user.id,
+    email: user.email,
+    first_name: user.first_name,
+    last_name: user.last_name,
+    created_at: user.created_at,
+    avatar_url: user.avatar_url,
+    email_confirmed: user.email_confirmed
+  };
+  data.jwt = jwt.sign(data, process.env.JWT_PASSWORD);
+  return data;
 }
 
-module.exports = { registerUser, loginUser, resetPasswordRequest, resetPasswordProcess, changePassword, registerOrLoginUser, updateUserPassword };
+function userExists(email) {
+  return db.select('*').from('user').where('email', email).reduce(helpers.getFirst);
+}
+
+async function getUserById(user_id) {
+  return db.select('*').from('user').where('id', user_id).reduce(helpers.getFirst).then(i => getCleanUserAndJwt(i));
+}
+
+module.exports = { registerUser, loginUser, resetPasswordRequest, resetPasswordProcess, registerOrLoginUser, updateUserPassword, sendConfirmEmailLink, confirmEmail, getUserById };
