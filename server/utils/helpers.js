@@ -57,7 +57,7 @@ function generateUuid() {
 }
 
 const auth = (req, res, next) => {
-  jwt.verify(req.headers['authorization'], jwtPassword, (err, decoded) => {
+  jwt.verify(req.headers['authorization'], process.env.JWT_PASSWORD, (err, decoded) => {
     if (err) res.json({ error: 'Unauthorized' });
     else {
       req.user = decoded;
