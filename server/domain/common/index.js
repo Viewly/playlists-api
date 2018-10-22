@@ -20,4 +20,8 @@ function updateSuggestion(suggestion) {
   return db.update('status', suggestion.status).from('suggestion').where('id', suggestion.id)
 }
 
-module.exports = { saveSuggestion, fetchSuggestions, updateSuggestion };
+function fetchSearchlog() {
+  return db.select('*').from('searchlog');
+}
+
+module.exports = { saveSuggestion, fetchSuggestions, updateSuggestion, fetchSearchlog };

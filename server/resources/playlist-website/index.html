@@ -213,6 +213,12 @@
         })
       };
 
+      $scope.loadSearchlog = () => {
+        $http.get(`${serverEndpoint}/searchlog`).then(data => {
+            $scope.searchlog = data.data;
+        });
+      };
+
       $scope.cancelUpdateVideo = () => {
         $scope.editPlaylist($scope.activePlaylist);
       };
@@ -221,6 +227,7 @@
         $scope.loadPlaylists();
         $scope.loadCategories();
         $scope.loadSuggestions();
+        $scope.loadSearchlog();
       }
 
       function durationToReadable(durationString) {
@@ -345,6 +352,9 @@
       </button>
       <button class="btn btn-sm btn-warning" ng-show="state !== 3" ng-click="state = 3">View
         Requests
+      </button>
+      <button class="btn btn-sm btn-danger" ng-show="state !== 4" ng-click="state = 4">View
+        Searchlog
       </button>
     </div>
   </div>
@@ -691,49 +701,28 @@
         </ul>
 
       </div>
-      <form class="col-sm-6">
-        <h3>Add video</h3>
-        <div class="form-group">
-          <label>Youtube URL</label>
-          <input ng-model="newVideo.url" type="text" class="form-control">
-          <button class="btn btn-success" ng-click="loadYoutubeUrl()">Load URL
-          </button>
-        </div>
-        <div class="row" ng-if="newVideo.video_id">
-          <div class="col-sm-12">
-            <div class="card text-white bg-info" style="padding: 20px">
-              <div class="card-body">
-                <h3>{{newVideo.title}}</h3>
-                <h4><i>Channel title:</i> <b>{{newVideo.channel_title}}</b></h4>
-                <h4><i>Duration: </i><b>{{newVideo.duration}}</b></h4>
-                <h4><i>Category: </i><b>{{newVideo.category}}</b></h4>
-                <h4><i>ID: </i><b>{{newVideo.video_id}}</b></h4>
-              </div>
-              <div class="row">
-                <div class="col-sm-6" ng-if="newVideo.thumbnail_url">
-                  <h4>Thumbnail:</h4>
-                  <img style="height: 150px" src="{{newVideo.thumbnail_url}}" alt="">
-                </div>
-                <div class="col-sm-6" ng-if="newVideo.channel_thumbnail">
-                  <h4>Channel Thumbnail:</h4>
-                  <img style="height: 150px" src="{{newVideo.channel_thumbnail}}" alt="">
-                </div>
+
+    </div>
+  </div>
+  <div ng-if="state === 4">
+    <div class="row">
+      <div class="col-sm-6">
+        <h4>Searchlog</h4>
+        <button class="btn btn-sm btn-default" ng-click="loadSearchlog()">Refresh</button>
+        <ul class="list-group">
+          <li ng-repeat="log in searchlog"
+              class="list-group-item list-group-item-action flex-column align-items-start">
+            <div>
+              <div class="d-flex w-100 justify-content-between">
+                <p>Keyword: {{log.keyword}}</p>
+                <p>Email: {{log.email || 'none'}}</p>
+                <p>Identifier: {{log.identifier || 'none'}}</p>
+                <p>Time {{log.created_at | date: 'dd.MM.yyyy HH:mm'}}</p>
               </div>
             </div>
-          </div>
-        </div>
-        <div ng-if="newVideo.video_id">
-          <div class="form-group" style="margin-top: 10px">
-            <label>Title</label>
-            <input ng-model="newVideo.title" type="text" class="form-control">
-          </div>
-          <div class="form-group">
-            <label>Description</label>
-            <textarea rows="3" ng-model="newVideo.description" type="text" class="form-control"></textarea>
-          </div>
-          <button ng-disabled="!newVideo.title" type="submit" class="btn btn-primary" ng-click="addVideo()">Add</button>
-        </div>
-      </form>
+          </li>
+        </ul>
+      </div>
     </div>
   </div>
 </div>
