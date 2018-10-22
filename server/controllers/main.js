@@ -5,8 +5,6 @@ const thumbnails = require('../domain/playlist/thumbnails');
 const video = require('../domain/video/index');
 const common = require('../domain/common/index');
 const utils = require('../utils/helpers');
-const jwt = require('jsonwebtoken');
-const jwtPassword = process.env.JWT_PASSWORD;
 
 router.get('/playlists', (req, res) => {
   playlist.getPlaylists(req.query, req.headers).then(playlists => {
@@ -114,15 +112,6 @@ router.get('/searchlog', (req, res) => {
   common.fetchSearchlog().then(data => {
     res.json(data);
   }).catch(err => res.json(err))
-});
-router.use((req, res, next) => {
-  jwt.verify(req.headers['authorization'], jwtPassword, (err, decoded) => {
-    if (err) res.json({error: 'Unauthorized'});
-    else {
-      req.user = decoded;
-      next();
-    }
-  });
 });
 
 

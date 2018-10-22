@@ -1,16 +1,21 @@
 const moment = require('moment');
+const bcrypt = require('bcryptjs');
+const uuid = require('uuid');
+const jwt = require('jsonwebtoken');
+const jwtPassword = process.env.JWT_PASSWORD;
+
 const getFirst = (_, i) => {
   return i[0];
 };
 
 function getParameterByName(name, url) {
   if (!url) url = window.location.href;
-  name = name.replace(/[\[\]]/g, "\\$&");
-  const regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+  name = name.replace(/[\[\]]/g, '\\$&');
+  const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
     results = regex.exec(url);
   if (!results) return null;
   if (!results[2]) return '';
-  return decodeURIComponent(results[2].replace(/\+/g, " "));
+  return decodeURIComponent(results[2].replace(/\+/g, ' '));
 }
 
 async function timeout(seconds) {
@@ -18,12 +23,56 @@ async function timeout(seconds) {
     setTimeout(() => {
       resolve();
     }, seconds * 1000);
-  })
+  });
 }
-
 
 function durationToReadable(durationString) {
   const duration = moment.duration(durationString);
-  return moment.utc(duration.asMilliseconds()).format("HH:mm:ss");
+  return moment.utc(duration.asMilliseconds()).format('HH:mm:ss');
 }
-module.exports = { getFirst, getParameterByName, timeout, durationToReadable };
+
+function createBcryptHash(string) {
+  return new Promise((resolve, reject) => {
+    bcrypt.hash(string, 10, (err, hash) => {
+      err ? reject(err) : resolve(hash);
+    });
+  });
+}
+
+function compareBcryptHash(string, hash) {
+  return new Promise((resolve, reject) => {
+    bcrypt.compare(string, hash, function (err, res) {
+      if (err) reject(err);
+      else if (res) {
+        resolve(true);
+      } else {
+        resolve(false);
+      }
+    });
+  });
+}
+
+function generateUuid() {
+  return uuid.v4();
+}
+
+const auth = (req, res, next) => {
+  jwt.verify(req.headers['authorization'], jwtPassword, (err, decoded) => {
+    if (err) res.json({ error: 'Unauthorized' });
+    else {
+      req.user = decoded;
+      next();
+    }
+  });
+};
+
+module.exports = {
+  getFirst,
+  getParameterByName,
+  timeout,
+  generateUuid,
+  createBcryptHash,
+  compareBcryptHash,
+  durationToReadable,
+  auth,
+};

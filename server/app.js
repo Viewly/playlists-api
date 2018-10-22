@@ -6,13 +6,16 @@ const express = require('express'),
   logger = require('morgan'),
   path = require('path'),
   http = require('http'),
-  Raven = require('raven');
+  Raven = require('raven'),
+  helpers = require('./utils/helpers');
 
 require('dotenv').config();
 
 const wwwUtils = require('./utils/www.js');
 const mainController = require('./controllers/main');
+const userController = require('./controllers/user');
 const adminController = require('./controllers/admin');
+
 console.log(process.env.NODE_ENV, "- ENV");
 /**
  * Setup express app
@@ -41,6 +44,7 @@ app.use('/app', express.static(path.join(__dirname, '../frontend')));
  * Wire controllers
  */
 app.use('/v1/api', mainController);
+app.use('/v1/api/user', userController);
 app.use('/', adminController);
 //app.use(auth.verifyToken()); // Protected endpoints below
 
