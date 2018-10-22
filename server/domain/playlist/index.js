@@ -32,7 +32,7 @@ function getPlaylists(query, headers) {
       Object.keys(query).forEach(key => { search['playlist.' + key] = query[key]});
       q.where(search);
       if (title) {
-        q.where('playlist.title', 'LIKE', `%${title}%`);
+        q.where('playlist.title', 'ILIKE', `%${title}%`);
         let log = {keyword: title};
         if (headers) {
           log.identifier = headers.identifier;
