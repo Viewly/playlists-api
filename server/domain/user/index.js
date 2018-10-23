@@ -52,7 +52,7 @@ async function registerUser(user){
           email_confirmed: !!user.g_access_token
         }).into('user');
         await Promise.all([emails.sendWelcomeEmail(user), sendConfirmEmailLink(user.email)]);
-        return { success: true, user, registered: true };
+        return { success: true, user: getCleanUserAndJwt(user), registered: true };
     }
 }
 
