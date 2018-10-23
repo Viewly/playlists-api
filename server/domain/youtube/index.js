@@ -6,6 +6,8 @@ const path = require('path');
 const _ = require('lodash');
 const creds = require(`./credentials.${process.env.NODE_ENV || 'staging'}`);
 const oAuthCreds = require(`./credentials.oauth.${process.env.NODE_ENV || 'staging'}`);
+const playlist = require('../playlist/index');
+const video = require('../video/index');
 
 const categories = fs.readFileSync(path.join(__dirname, './categories.txt'), 'utf-8');
 const yt_categories = {};
@@ -72,6 +74,10 @@ async function getVideoMetadata(video_id) {
         console.log('The API returned an error: ' + err);
         reject(err);
       } else {
+        if (!response.data.items[0]) {
+          resolve(null);
+          return;
+        }
         const metadata = response.data.items[0].snippet;
         const thumbnails = metadata.thumbnails;
         const contentDetails = response.data.items[0].contentDetails;
@@ -139,6 +145,44 @@ function getUserInfoByCode(code){
   return getAccessToken(code).then(tokens => getUserInfo(getAuthClientOauth(tokens)))
 }
 
+function fetchYoutubePlaylistById(playlist_id){
+  return new Promise((resolve, reject) => {
+    service.playlistItems.list({
+      'maxResults': 50,
+      'part': 'snippet,contentDetails',
+      'playlistId': playlist_id}, function(err, response) {
+      if (err) {
+        console.log('The API returned an error: ' + err);
+        reject(err);
+      }
+      console.log(response);
+      resolve(response);
+    });
+  })
+}
+
+async function importPlaylistFromYoutube(playlistMetadata, youtubePlaylistId){
+  const youtubePlaylist = await fetchYoutubePlaylistById(youtubePlaylistId);
+  const videos = youtubePlaylist.data.items;
+  const user_id = 'Viewly';
+  const playlist_id = await playlist.createPlaylist(user_id, {
+    title: playlistMetadata.title,
+    description: playlistMetadata.description,
+    category: playlistMetadata.category,
+    status: playlistMetadata.status || 'published',
+    playlist_thumbnail_url: playlistMetadata.playlist_thumbnail_url
+  });
+  await Promise.all(videos.map(async(i) => {
+    let videoItem = await getVideoMetadata(i.contentDetails.videoId);
+    if (videoItem) {
+      await video.createOrUpdateSourceVideo(user_id, videoItem);
+      videoItem.playlist_id = playlist_id;
+      return video.addVideoToPlaylist(user_id, videoItem);
+    } else return true;
+  }));
+
+  return playlist_id;
+}
 
 
-module.exports = { getVideoMetadata, getCategories, getAuthUrl, getUserInfoByCode };
+module.exports = { getVideoMetadata, getCategories, getAuthUrl, getUserInfoByCode, importPlaylistFromYoutube };

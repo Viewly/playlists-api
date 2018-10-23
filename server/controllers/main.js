@@ -44,6 +44,15 @@ router.post('/playlist-reorder/:playlist_id', async (req, res) => {
     res.json({success: true});
   }).catch(err => res.json(err))
 });
+router.post('/playlist-import', (req, res) => {
+  const youtubePlaylistId = utils.getParameterByName('list', req.body.url);
+  if (!youtubePlaylistId) res.json({success: false, reason: "Youtube playlist url not valid"});
+  else {
+    youtube.importPlaylistFromYoutube(req.body, youtubePlaylistId).then(() => {
+      res.json({success: true});
+    }).catch(err => res.json(err))
+  }
+});
 router.post('/add-video', (req, res) => {
   const uuid = req.user_id || 'Viewly';
   if (!req.body.playlist_id) res.json({success: false, reason: "playlist_id is mandatory"});

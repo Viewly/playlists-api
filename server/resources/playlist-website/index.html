@@ -58,6 +58,7 @@
       const serverEndpoint = '/v1/api';
       $scope.s3endpoint = 'https://s3.eu-central-1.amazonaws.com/viewly-playlists-eu1/upload';
       $scope.playlistEditMode = false;
+      $scope.importedPlaylist = {};
 
       $scope.loadPlaylists = () => {
         clearUploadData();
@@ -219,6 +220,13 @@
         });
       };
 
+      $scope.importYoutubePlaylist = () => {
+        $http.post(`${serverEndpoint}/playlist-import`, $scope.importedPlaylist).then(() => {
+          $scope.importedPlaylist = {};
+          $scope.loadPlaylists();
+        });
+      };
+
       $scope.cancelUpdateVideo = () => {
         $scope.editPlaylist($scope.activePlaylist);
       };
@@ -356,6 +364,7 @@
       <button class="btn btn-sm btn-danger" ng-show="state !== 4" ng-click="state = 4">View
         Searchlog
       </button>
+      <button class="btn btn-sm btn-info" ng-show="state !== 5" ng-click="state = 5">Import YT playlist</button>
     </div>
   </div>
 
@@ -722,6 +731,23 @@
             </div>
           </li>
         </ul>
+      </div>
+    </div>
+  </div>
+  <div ng-if="state === 5">
+    <div class="row">
+      <div class="col-sm-6">
+        <h4>Import YT playlist</h4>
+        <div class="form-group">
+          <label>Playlist title</label>
+          <input ng-model="importedPlaylist.title" type="text" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Youtube playlist URL</label>
+          <input ng-model="importedPlaylist.url" type="text" class="form-control">
+        </div>
+        <button ng-disabled="!importedPlaylist.title || !importedPlaylist.url" class="btn btn-sm btn-default" ng-click="importYoutubePlaylist()">Import</button>
+
       </div>
     </div>
   </div>
