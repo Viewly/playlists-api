@@ -28,7 +28,7 @@ let corsOptions = {
 };
 
 if (!is_live) corsOptions = null;
-app.use(cors());
+app.use(cors(corsOptions));
 
 app.use(logger('dev'));
 app.use(bodyParser.json());
