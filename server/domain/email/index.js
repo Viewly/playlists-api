@@ -25,7 +25,6 @@ function sendEmail(email) {
   });
 }
 
-
 module.exports = {
   sendConfirmEmail,
   sendResetPasswordEmail,

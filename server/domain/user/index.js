@@ -3,6 +3,7 @@ const helpers = require('../../utils/helpers');
 const moment = require('moment');
 const jwt = require('jsonwebtoken');
 const youtube = require('../youtube/index');
+const emails = require('../email/index');
 
 async function registerOrLoginUser(code){ //For Youtube
   const googleUser = await youtube.getUserInfoByCode(code);
@@ -50,7 +51,7 @@ async function registerUser(user){
           g_refresh_token: user.g_refresh_token,
           email_confirmed: !!user.g_access_token
         }).into('user');
-
+        await Promise.all([emails.sendWelcomeEmail(user), sendConfirmEmailLink(user.email)]);
         return { success: true, user, registered: true };
     }
 }
@@ -76,7 +77,7 @@ async function resetPasswordRequest(email) {
     password_reset_token: uuid,
     password_reset_token_expiry: moment(new Date()).add(24, 'hours')
   }).from('user').where('email', email);
-  //Send email here;
+  await emails.sendResetPasswordEmail({email, password_reset_token: uuid});
   return { success: true, message: "Reset password link has been sent to your email." };
 }
 
@@ -112,6 +113,7 @@ async function sendConfirmEmailLink(email) {
     if (!user.email_confirmed) {
       const uuid = helpers.generateUuid();
       await db.from('user').update('email_confirm_token', uuid).where('email', email);
+      await emails.sendConfirmEmail({email, email_confirm_token: uuid});
       //Send email with the uuid
       return { success: true, message: "An email with confirmation link has been sent." }
     } else {

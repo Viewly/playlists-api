@@ -3,7 +3,7 @@ function confirmEmail(user) {
     'VIDFLOW-CONFIRM',
     'Vidflow email confirmation!',
     user.email,
-    { fname: user.first_name, lname: user.last_name },
+    { confirm: `${process.env.CURRENT_ENDPOINT}/confirm-email/${user.email_confirm_token}` },
   );
 }
 
@@ -12,7 +12,7 @@ function resetPasswordEmail(user) {
     'VIDFLOW-RESET-PASSWORD',
     'Vidflow reset password',
     user.email,
-    { fname: user.first_name, lname: user.last_name },
+    { reset: `${process.env.CURRENT_ENDPOINT}/reset-password/${user.password_reset_token}` },
   );
 }
 
