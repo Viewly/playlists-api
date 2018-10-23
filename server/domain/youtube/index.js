@@ -1,10 +1,13 @@
 const {google} = require('googleapis');
-const OAuth2 = google.auth.JWT;
+const JWT = google.auth.JWT;
+const OAuth2 = google.auth.OAuth2;
 const fs = require('fs');
 const path = require('path');
 const _ = require('lodash');
 const creds = require(`./credentials.${process.env.NODE_ENV || 'staging'}`);
-
+const oAuthCreds = require(`./credentials.oauth.${process.env.NODE_ENV || 'staging'}`);
+const playlist = require('../playlist/index');
+const video = require('../video/index');
 
 const categories = fs.readFileSync(path.join(__dirname, './categories.txt'), 'utf-8');
 const yt_categories = {};
@@ -13,12 +16,43 @@ categories.split('\n').forEach(i => {
   if (arr[0]) yt_categories[arr[0].trim()] = arr[1];
 });
 
-function getAuthClient(){
+function getAuthClientJwt(){ //Used for server side things
   const privateKey = _.replace(creds.private_key, /\\n/g, '\n');
   const scope = ['https://www.googleapis.com/auth/youtube'];
-  return new OAuth2(creds.client_email, null, privateKey, scope, null);
+  return new JWT(creds.client_email, null, privateKey, scope, null);
 }
-const auth = getAuthClient();
+
+function getAuthClientOauth(tokens){ //Used for logging in
+  let url = process.env.REDIRECT_ENDPOINT;
+  const oauth2Client = new OAuth2(
+    oAuthCreds.web.client_id,
+    oAuthCreds.web.client_secret,
+    url
+  );
+
+  if(tokens)
+    oauth2Client.credentials = tokens;
+  return oauth2Client;
+}
+
+function getAuthUrl(){
+  return Promise.resolve(getAuthClientOauth().generateAuthUrl({
+    access_type: 'offline',
+    scope: ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email']
+  }));
+}
+
+function getAccessToken(code){
+  return new Promise((resolve, reject) => {
+    getAuthClientOauth().getToken(code).then(res => {
+      resolve(res.tokens)
+    }, err => {
+      reject(err);
+    })
+  })
+}
+
+const auth = getAuthClientJwt();
 const service = google.youtube({
   version: 'v3',
   auth
@@ -40,6 +74,10 @@ async function getVideoMetadata(video_id) {
         console.log('The API returned an error: ' + err);
         reject(err);
       } else {
+        if (!response.data.items[0]) {
+          resolve(null);
+          return;
+        }
         const metadata = response.data.items[0].snippet;
         const thumbnails = metadata.thumbnails;
         const contentDetails = response.data.items[0].contentDetails;
@@ -84,33 +122,67 @@ function getCategories(){
   return Object.keys(yt_categories).map(key => ({id: key, name: yt_categories[key]}))
 }
 
-// async function getChannelDetails(user_id){
-//
-//   return new Promise((resolve, reject) => {
-//     service.channels.list({
-//       auth,
-//       part: 'snippet,contentDetails,statistics',
-//       //mine: true
-//     }, (err, response) => {
-//       if (err) {
-//         console.log('The API returned an error: ' + err);
-//         reject(err);
-//       }
-//       const metadata = response.data.items[0];
-//       const statistics = metadata.statistics;
-//       const snippet = metadata.snippet;
-//
-//       resolve({
-//         channel_id: metadata.id,
-//         thumbnail_url: snippet.thumbnails.default.url,
-//         title: snippet.title,
-//         comment_count: parseInt(statistics.commentCount),
-//         subscriber_count: parseInt(statistics.subscriberCount),
-//         video_count: parseInt(statistics.videoCount),
-//         view_count: parseInt(statistics.viewCount)
-//       });
-//     })
-//   })
-// }
+async function getUserInfo(auth){
+  const oauth2 = google.oauth2({
+    auth,
+    version: 'v2'
+  });
+  return new Promise((resolve, reject) => {
+    oauth2.userinfo.get(
+      function(err, res) {
+        if (err) {
+          reject(err);
+        } else {
+          res.data.g_access_token = auth.credentials.access_token;
+          res.data.g_refresh_token = auth.credentials.refresh_token;
+          resolve(res.data)
+        }
+      });
+  })
+}
 
-module.exports = { getVideoMetadata, getCategories };
+function getUserInfoByCode(code){
+  return getAccessToken(code).then(tokens => getUserInfo(getAuthClientOauth(tokens)))
+}
+
+function fetchYoutubePlaylistById(playlist_id){
+  return new Promise((resolve, reject) => {
+    service.playlistItems.list({
+      'maxResults': 50,
+      'part': 'snippet,contentDetails',
+      'playlistId': playlist_id}, function(err, response) {
+      if (err) {
+        console.log('The API returned an error: ' + err);
+        reject(err);
+      }
+      console.log(response);
+      resolve(response);
+    });
+  })
+}
+
+async function importPlaylistFromYoutube(playlistMetadata, youtubePlaylistId){
+  const youtubePlaylist = await fetchYoutubePlaylistById(youtubePlaylistId);
+  const videos = youtubePlaylist.data.items;
+  const user_id = 'Viewly';
+  const playlist_id = await playlist.createPlaylist(user_id, {
+    title: playlistMetadata.title,
+    description: playlistMetadata.description,
+    category: playlistMetadata.category,
+    status: playlistMetadata.status || 'published',
+    playlist_thumbnail_url: playlistMetadata.playlist_thumbnail_url
+  });
+  await Promise.all(videos.map(async(i) => {
+    let videoItem = await getVideoMetadata(i.contentDetails.videoId);
+    if (videoItem) {
+      await video.createOrUpdateSourceVideo(user_id, videoItem);
+      videoItem.playlist_id = playlist_id;
+      return video.addVideoToPlaylist(user_id, videoItem);
+    } else return true;
+  }));
+
+  return playlist_id;
+}
+
+
+module.exports = { getVideoMetadata, getCategories, getAuthUrl, getUserInfoByCode, importPlaylistFromYoutube };

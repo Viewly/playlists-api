@@ -5,8 +5,6 @@ const thumbnails = require('../domain/playlist/thumbnails');
 const video = require('../domain/video/index');
 const common = require('../domain/common/index');
 const utils = require('../utils/helpers');
-const jwt = require('jsonwebtoken');
-const jwtPassword = process.env.JWT_PASSWORD;
 
 router.get('/playlists', (req, res) => {
   playlist.getPlaylists(req.query, req.headers).then(playlists => {
@@ -45,6 +43,15 @@ router.post('/playlist-reorder/:playlist_id', async (req, res) => {
   playlist.reorderPlaylist(uuid, req.params.playlist_id, req.body).then(() => {
     res.json({success: true});
   }).catch(err => res.json(err))
+});
+router.post('/playlist-import', (req, res) => {
+  const youtubePlaylistId = utils.getParameterByName('list', req.body.url);
+  if (!youtubePlaylistId) res.json({success: false, reason: "Youtube playlist url not valid"});
+  else {
+    youtube.importPlaylistFromYoutube(req.body, youtubePlaylistId).then(() => {
+      res.json({success: true});
+    }).catch(err => res.json(err))
+  }
 });
 router.post('/add-video', (req, res) => {
   const uuid = req.user_id || 'Viewly';
@@ -114,15 +121,6 @@ router.get('/searchlog', (req, res) => {
   common.fetchSearchlog().then(data => {
     res.json(data);
   }).catch(err => res.json(err))
-});
-router.use((req, res, next) => {
-  jwt.verify(req.headers['authorization'], jwtPassword, (err, decoded) => {
-    if (err) res.json({error: 'Unauthorized'});
-    else {
-      req.user = decoded;
-      next();
-    }
-  });
 });
 
 
