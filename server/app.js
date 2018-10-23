@@ -53,7 +53,7 @@ app.use('/', adminController);
  * Setup and start http server
  */
 is_live && app.use(Raven.errorHandler());
-const server = http.createServer(app).listen(3000);
+const server = http.createServer(app).listen(process.env.PORT || 3000);
 server.on('error', wwwUtils.onError);
 server.on('listening', () => wwwUtils.onListening(server));
 module.exports = app;
