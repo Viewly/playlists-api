@@ -392,6 +392,10 @@
                     <a ng-if="playlist.shown == 500" ng-click="playlist.shown = 0">Show less</a>
                   </p>
                   <div class="thin">
+                    <p ng-if="playlist.url">
+                      <small><a target="_blank" href="{{'https://vidflow.io/playlist/' + playlist.url}}">Link ({{playlist.url}})</a></small>
+                    </p>
+                    <p ng-if="!playlist.url" style="color: red">URL Missing</p>
                     <p>
                       <small>Category: {{playlist.category}}</small>
                     </p>
@@ -517,7 +521,7 @@
           <span style="color: red" ng-if="activePlaylist.status == 'hidden'" class="glyphicon glyphicon-remove"></span>
         </p>
         <button style="float: right" class="btn btn btn-warning" ng-click="playlistEdit()">Edit/Reorder</button>
-        <button style="float: right" class="btn btn btn-danger" ng-click="playlistDelete()">Delete</button>
+        <button style="float: left" class="btn btn btn-danger" ng-click="playlistDelete()">Delete</button>
       </div>
       <div ng-if="playlistEditMode" class="row" style="padding: 20px">
         <form class="col-sm-6">

@@ -10,6 +10,7 @@ function getPlaylists(query, headers) {
     'playlist.title as playlist_title',
     'playlist.description as playlist_description',
     'playlist.playlist_thumbnail_url',
+    'playlist.url',
     'playlist.category',
     'playlist.user_id',
     'playlist.status',
@@ -50,6 +51,7 @@ function getPlaylists(query, headers) {
           playlistMap[id] = {
             id: id,
             title: i.playlist_title,
+            url: i.url,
             playlist_thumbnail_url: i.playlist_thumbnail_url,
             description: i.playlist_description,
             classification: i.classification,
