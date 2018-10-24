@@ -12,8 +12,9 @@ router.get('/playlists', (req, res) => {
   }).catch(err => res.json(err))
 });
 
-router.get('/playlist/:playlist_id', (req, res) => {
-  playlist.getPlaylist(req.params.playlist_id).then(playlist => {
+router.get('/playlist/:playlist_id', async (req, res) => {
+  const playlist_id = await playlist.playlistUuidConvert(req.params.playlist_id);
+  playlist.getPlaylist(playlist_id).then(playlist => {
     res.json(playlist);
   }).catch(err => res.json(err))
 });
@@ -45,7 +46,7 @@ router.post('/playlist-reorder/:playlist_id', async (req, res) => {
   }).catch(err => res.json(err))
 });
 router.post('/playlist-import', (req, res) => {
-  const youtubePlaylistId = utils.getParameterByName('list', req.body.url);
+  const youtubePlaylistId = utils.getParameterByName('list', req.body.yt_url);
   if (!youtubePlaylistId) res.json({success: false, reason: "Youtube playlist url not valid"});
   else {
     youtube.importPlaylistFromYoutube(req.body, youtubePlaylistId).then(() => {

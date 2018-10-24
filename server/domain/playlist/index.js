@@ -91,10 +91,12 @@ function createPlaylist(user_id, playlist) {
     id: playlist_id,
     user_id: user_id,
     title: playlist.title,
+    url: playlist.url,
     description: playlist.description,
     category: playlist.category,
-    status: playlist.status || 'published',
-    playlist_thumbnail_url: playlist.playlist_thumbnail_url
+    status: playlist.status || 'hidden',
+    playlist_thumbnail_url: playlist.playlist_thumbnail_url,
+    youtube_playlist_id: playlist.youtube_playlist_id
   }).into('playlist').then(() => Promise.resolve(playlist_id));
 }
 
@@ -114,6 +116,7 @@ async function updatePlaylist(user_id, playlist) {
   return db.from('playlist').
     update({
       title: playlist.title,
+      url: playlist.url,
       description: playlist.description,
       category: playlist.category,
       status: playlist.status,
@@ -122,11 +125,22 @@ async function updatePlaylist(user_id, playlist) {
     }).where({ user_id, id: playlist.id });
 }
 
+async function playlistUuidConvert(playlist_id){
+  const uuid = utils.validateUuid(playlist_id, 4);
+  if (uuid) {
+    return playlist_id;
+  } else {
+    const playlist = await db.select('*').from('playlist').where('url', playlist_id).reduce(utils.getFirst);
+    return playlist.id;
+  }
+}
+
 module.exports = {
   getPlaylists,
   updatePlaylist,
   getPlaylist,
   createPlaylist,
   reorderPlaylist,
-  deletePlaylist
+  deletePlaylist,
+  playlistUuidConvert
 };

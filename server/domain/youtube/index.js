@@ -171,6 +171,7 @@ async function importPlaylistFromYoutube(playlistMetadata, youtubePlaylistId){
     category: playlistMetadata.category,
     status: playlistMetadata.status || 'hidden',
     playlist_thumbnail_url: playlistMetadata.playlist_thumbnail_url,
+    youtube_playlist_id: youtubePlaylistId
   });
   await Promise.all(videos.map(async(i) => {
     let videoItem = await getVideoMetadata(i.contentDetails.videoId);
