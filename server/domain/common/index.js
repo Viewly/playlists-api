@@ -13,7 +13,7 @@ function saveSuggestion(suggestion) {
 }
 
 function fetchSuggestions() {
-  return db.select('*').from('suggestion');
+  return db.select('*').from('suggestion').orderBy('created_at', 'desc');
 }
 
 function updateSuggestion(suggestion) {
@@ -21,7 +21,7 @@ function updateSuggestion(suggestion) {
 }
 
 function fetchSearchlog() {
-  return db.select('*').from('searchlog');
+  return db.select('*').from('searchlog').orderBy('created_at', 'desc');
 }
 
 module.exports = { saveSuggestion, fetchSuggestions, updateSuggestion, fetchSearchlog };
