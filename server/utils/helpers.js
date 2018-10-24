@@ -2,7 +2,7 @@ const moment = require('moment');
 const bcrypt = require('bcryptjs');
 const uuid = require('uuid');
 const jwt = require('jsonwebtoken');
-const jwtPassword = process.env.JWT_PASSWORD;
+const validateUuid = require('uuid-validate');
 
 const getFirst = (_, i) => {
   return i[0];
@@ -75,4 +75,5 @@ module.exports = {
   compareBcryptHash,
   durationToReadable,
   auth,
+  validateUuid
 };
