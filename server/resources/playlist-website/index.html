@@ -49,7 +49,9 @@
     const app = angular.module('stitch-playlist-creator', ['ngFileUpload']);
     app.controller('main', ($scope, $http, $sce, $q) => {
       $scope.playlists = [];
+      $scope.suggestionsFilterType = 'new-playlist';
       $scope.categories = [];
+      $scope.categoriesMap = {}; //Used for converting ids to strings
       $scope.activePlaylist = {};
       $scope.newVideo = {};
       $scope.newPlaylist = { status: "published" };
@@ -71,6 +73,9 @@
       $scope.loadCategories = () => {
         $http.get(`${serverEndpoint}/categories`).then(data => {
           $scope.categories = data.data;
+          $scope.categories.forEach(category => {
+            $scope.categoriesMap[category.id] = category.name;
+          })
         });
       };
 
@@ -695,64 +700,63 @@
   </div>
   <div ng-if="state === 3">
     <div class="row">
-      <div class="col-sm-6">
-        <h4>Suggestions</h4>
+      <div class="col-sm-12">
+        <h4>Requests</h4>
+        <button class="btn btn-success" ng-disabled="suggestionsFilterType == 'new-playlist'" ng-click="suggestionsFilterType = 'new-playlist'">View playlists</button>
+        <button class="btn btn-success" ng-disabled="suggestionsFilterType == 'suggest-video'" ng-click="suggestionsFilterType = 'suggest-video'">View suggestions</button>
         <button class="btn btn-sm btn-default" ng-click="loadSuggestions()">Refresh</button>
-        <ul class="list-group">
-          <li ng-repeat="suggestion in suggestions"
-              class="list-group-item list-group-item-action flex-column align-items-start">
-            <div>
-              <div class="d-flex w-100 justify-content-between">
-                <p>Type: {{suggestion.type}}</p>
-                <p>Title: {{suggestion.title}}</p>
-                <p>Description: {{suggestion.description}}</p>
-                <p>Email: {{suggestion.email}}</p>
-                <p>Status: <b>{{suggestion.status}}</b></p>
-                <p>Category: <b>{{suggestion.category}}</b></p>
-                <p>URL: {{suggestion.url}}</p>
-                <p>Playlist: <a target="_blank" href="{{'https://vidflow.io/playlist/' + suggestion.playlist_id}}">{{suggestion.playlist_id}}</a></p>
-              </div>
-              <button class="btn btn-primary btn-sm"
-                      ng-click="suggestion.editMode = true">Edit
-              </button>
-            </div>
-            <div ng-if="suggestion.editMode">
-              <div class="form-group">
-                <label>Status</label>
-                <select ng-model="suggestion.status" class="form-control">
-                  <option></option>
-                  <option ng-value="'approved'">Approved</option>
-                  <option ng-value="'rejected'">Rejected</option>
-                </select>
-              </div>
-              <button class="btn btn-default btn-sm" ng-click="updateSuggestionStatus(suggestion)">Save</button>
-              <button class="btn btn-default btn-sm" ng-click="suggestion.editMode = false; loadSuggestions()">Cancel</button>
-            </div>
-          </li>
-        </ul>
-
+        <h4>{{suggestionsFilterType == 'suggest-video' ? 'Video suggestions' : 'New playlist suggestions'}}</h4>
+        <table class="table table-condensed table-bordered table-hover">
+          <thead>
+          <tr>
+            <th scope="col">Title</th>
+            <th scope="col">Email</th>
+            <th scope="col">Category</th>
+            <th scope="col">Vid URL</th>
+            <th scope="col">Playlist</th>
+            <th scope="col">Status</th>
+            <th scope="col">Time</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr ng-repeat="suggestion in suggestions | filter:{type: suggestionsFilterType}">
+            <td>{{suggestion.title}} <span title="{{suggestion.description}}"><b>Desc</b></span></td>
+            <td>{{suggestion.email}}</td>
+            <td>{{categoriesMap[suggestion.category]}}</td>
+            <td><a href="{{suggestion.url}}" target="_blank">Link</a></td>
+            <td><a href="{{'https://vidflow.io/playlist/' + suggestion.playlist_id}}" target="_blank">Link</a></td>
+            <td>{{suggestion.status}}</td>
+            <td>{{suggestion.created_at | date: 'dd.MM.yyyy HH:mm'}}</td>
+          </tr>
+          </tbody>
+        </table>
       </div>
-
     </div>
   </div>
   <div ng-if="state === 4">
     <div class="row">
-      <div class="col-sm-6">
+      <div class="col-sm-12">
         <h4>Searchlog</h4>
         <button class="btn btn-sm btn-default" ng-click="loadSearchlog()">Refresh</button>
-        <ul class="list-group">
-          <li ng-repeat="log in searchlog"
-              class="list-group-item list-group-item-action flex-column align-items-start">
-            <div>
-              <div class="d-flex w-100 justify-content-between">
-                <p>Keyword: {{log.keyword}}</p>
-                <p>Email: {{log.email || 'none'}}</p>
-                <p>Identifier: {{log.identifier || 'none'}}</p>
-                <p>Time {{log.created_at | date: 'dd.MM.yyyy HH:mm'}}</p>
-              </div>
-            </div>
-          </li>
-        </ul>
+        <table class="table table-condensed table-bordered table-hover">
+          <thead>
+          <tr>
+            <th scope="col">Keyword</th>
+            <th scope="col">Email</th>
+            <th scope="col">Identifier</th>
+            <th scope="col">Time</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr ng-repeat="log in searchlog">
+            <th scope="row">{{log.keyword}}</th>
+            <td>{{log.email}}</td>
+            <td>{{log.identifier}}</td>
+            <td>{{log.created_at | date: 'dd.MM.yyyy HH:mm'}}</td>
+          </tr>
+          </tbody>
+        </table>
+
       </div>
     </div>
   </div>
