@@ -4,6 +4,7 @@ const youtube = require('../domain/youtube/index');
 const thumbnails = require('../domain/playlist/thumbnails');
 const video = require('../domain/video/index');
 const common = require('../domain/common/index');
+const reviews = require('../domain/reviews/index');
 const utils = require('../utils/helpers');
 
 router.get('/playlists', (req, res) => {
@@ -124,5 +125,23 @@ router.get('/searchlog', (req, res) => {
   }).catch(err => res.json(err))
 });
 
+router.get('/reviews/:playlist_id', (req, res) => {
+  reviews.getReviewsForPlaylist(req.params.playlist_id).then(data => {
+    res.json(data);
+  }).catch(err => res.json(err))
+});
+router.use(utils.auth);
+router.post('/review', (req, res) => {
+  const uuid = req.user.id;
+  reviews.createReview(uuid, req.body).then(data => {
+    res.json({success: true});
+  }).catch(err => res.json(err))
+});
 
+router.delete('/review/:review_id', (req, res) => {
+  const uuid = req.user.id;
+  reviews.deleteReview(uuid, req.params.review_id).then(() => {
+    res.json({success: true});
+  }).catch(err => res.json(err))
+});
 module.exports = router;
