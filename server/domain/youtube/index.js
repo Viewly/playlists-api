@@ -164,7 +164,6 @@ function fetchYoutubePlaylistById(playlist_id){
 async function importPlaylistFromYoutube(user_id, playlistMetadata, youtubePlaylistId){
   const youtubePlaylist = await fetchYoutubePlaylistById(youtubePlaylistId);
   const videos = youtubePlaylist.data.items;
-  const user_id = user_id || 'Viewly';
   const playlist_id = await playlist.createPlaylist(user_id, {
     title: playlistMetadata.title,
     description: playlistMetadata.description,
