@@ -1,6 +1,7 @@
 <html>
 <head>
   <!-- Latest compiled and minified CSS -->
+  <base href="/">
   <title>Playlist Builder</title>
   <link rel="stylesheet"
         href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
@@ -47,25 +48,37 @@
   <script>
 
     const app = angular.module('stitch-playlist-creator', ['ngFileUpload']);
-    app.controller('main', ($scope, $http, $sce, $q) => {
+    app.config(($locationProvider) => {
+      $locationProvider.html5Mode(true);
+    });
+    app.controller('main', ($scope, $http, $sce, $q, $location) => {
       $scope.playlists = [];
       $scope.suggestionsFilterType = 'new-playlist';
       $scope.categories = [];
       $scope.categoriesMap = {}; //Used for converting ids to strings
       $scope.activePlaylist = {};
       $scope.newVideo = {};
-      $scope.newPlaylist = { status: "published" };
+      $scope.newPlaylist = { status: "hidden" };
       $scope.state = 0;
-      const user_id = 'Viewly';
+      let user_id = '';
+      if (!$location.search().vidflowadminxyz) {
+        user_id = localStorage.getItem('uuid') || guid(); //'Viewly';
+        localStorage.setItem('uuid', user_id);
+      } else {
+        user_id = $location.search().impersonate || 'Viewly';
+        $scope.admin = true;
+      }
       const serverEndpoint = '/v1/api';
       $scope.s3endpoint = 'https://s3.eu-central-1.amazonaws.com/viewly-playlists-eu1/upload';
       $scope.playlistEditMode = false;
       $scope.importedPlaylist = {};
 
+
       $scope.loadPlaylists = () => {
         clearUploadData();
         $scope.state = 0;
-        $http.get(`${serverEndpoint}/playlists`).then(data => {
+        let query = user_id === 'Viewly' ? null : { user_id };
+        $http.get(`${serverEndpoint}/playlists`, { params: query }).then(data => {
           $scope.playlists = data.data;
         });
       };
@@ -80,7 +93,9 @@
       };
 
       $scope.saveNewPlaylist = () => {
-        $http.post(`${serverEndpoint}/playlist`, $scope.newPlaylist).then(data => {
+        $http.post(`${serverEndpoint}/playlist`, $scope.newPlaylist, {
+          headers: { user_id  }
+        }).then(data => {
           if (data.data.id) {
             $scope.newPlaylist = { status: "published" };
             $scope.loadPlaylists();
@@ -111,7 +126,9 @@
       };
 
       $scope.loadYoutubeUrl = () => {
-        $http.get(`${serverEndpoint}/video-prefill?url=${$scope.newVideo.url}`).
+        $http.get(`${serverEndpoint}/video-prefill?url=${$scope.newVideo.url}`, {
+          headers: { user_id  }
+        }).
           then(data => {
             Object.assign($scope.newVideo, data.data);
           });
@@ -122,6 +139,8 @@
           video_id: video.id,
           playlist_id: $scope.activePlaylist.id,
           user_id,
+        }, {
+          headers: { user_id  }
         }).then(data => {
           $scope.editPlaylist($scope.activePlaylist);
         });
@@ -129,7 +148,9 @@
 
       $scope.addVideo = () => {
         $scope.newVideo.playlist_id = $scope.activePlaylist.id;
-        $http.post(`${serverEndpoint}/add-video`, $scope.newVideo).then(data => {
+        $http.post(`${serverEndpoint}/add-video`, $scope.newVideo, {
+          headers: { user_id  }
+        }).then(data => {
           if (data.data.success) {
             $scope.newVideo = {};
             $scope.editPlaylist($scope.activePlaylist);
@@ -142,8 +163,12 @@
       $scope.updatePlaylist = () => {
         const videos = $scope.activePlaylist.videos.map((item, index) => ({id: item.id, position:index}));
         Promise.all([
-          $http.post(`${serverEndpoint}/playlist-reorder/${$scope.activePlaylist.id}`, videos),
-          $http.put(`${serverEndpoint}/playlist`, $scope.activePlaylist)
+          $http.post(`${serverEndpoint}/playlist-reorder/${$scope.activePlaylist.id}`, videos, {
+            headers: { user_id  }
+          }),
+          $http.put(`${serverEndpoint}/playlist`, $scope.activePlaylist, {
+            headers: { user_id  }
+          })
         ]).then(data => {
           const d1 = data[0].data;
           const d2 = data[1].data;
@@ -184,7 +209,9 @@
       };
 
       $scope.playlistDelete = () => {
-        $http.delete(`${serverEndpoint}/playlist/${$scope.activePlaylist.id}`).then((data) => {
+        $http.delete(`${serverEndpoint}/playlist/${$scope.activePlaylist.id}`, {
+          headers: { user_id  }
+        }).then((data) => {
           if (data.data.success) {
             $scope.loadPlaylists();
           } else {
@@ -194,7 +221,9 @@
       };
 
       $scope.updateVideo = (video) => {
-        $http.put(`${serverEndpoint}/video`, video).then((data) => {
+        $http.put(`${serverEndpoint}/video`, video, {
+          headers: { user_id  }
+        }).then((data) => {
           if (data.data.success) {
             $scope.editPlaylist($scope.activePlaylist);
           } else {
@@ -369,10 +398,10 @@
       <button class="btn btn-sm btn-primary" ng-show="state !== 0" ng-click="viewPlaylists()">View
         Playlists
       </button>
-      <button class="btn btn-sm btn-warning" ng-show="state !== 3" ng-click="state = 3">View
+      <button class="btn btn-sm btn-warning" ng-show="state !== 3 && admin" ng-click="state = 3">View
         Requests
       </button>
-      <button class="btn btn-sm btn-danger" ng-show="state !== 4" ng-click="state = 4">View
+      <button class="btn btn-sm btn-danger" ng-show="state !== 4 && admin" ng-click="state = 4">View
         Searchlog
       </button>
       <button class="btn btn-sm btn-info" ng-show="state !== 5" ng-click="state = 5">Import YT playlist</button>
@@ -503,7 +532,7 @@
         <label>Publish status:</label>
         <select ng-model="newPlaylist.status" class="form-control">
           <option value="published">Published</option>
-          <option value="hidden">Hidden</option>
+          <option ng-if="admin" value="hidden">Hidden</option>
         </select>
       </div>
       <button type="submit" ng-disabled="thumbnail_uploading || !newPlaylist.title" class="btn btn-primary" ng-click="saveNewPlaylist()">Save</button>
@@ -595,7 +624,7 @@
             <label>Publish status:</label>
             <select ng-model="activePlaylist.status" class="form-control">
               <option value="published">Published</option>
-              <option value="hidden">Hidden</option>
+              <option ng-if="admin" value="hidden">Hidden</option>
             </select>
           </div>
           <button type="submit" class="btn btn-primary" ng-disabled="thumbnail_uploading || !activePlaylist.title" ng-click="updatePlaylist()">Save</button>

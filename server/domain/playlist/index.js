@@ -26,7 +26,7 @@ function getPlaylists(query, headers) {
   .leftJoin('source_video', 'video.source_video_id', 'source_video.id')
   .orderBy('playlist.created_at', 'desc')
   .modify(async (q) => {
-    if (query){
+    if (query && Object.keys(query).length > 0){
       let search = {};
       const title = query.title;
       delete query.title;
