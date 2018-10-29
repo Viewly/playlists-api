@@ -255,7 +255,9 @@
       };
 
       $scope.importYoutubePlaylist = () => {
-        $http.post(`${serverEndpoint}/playlist-import`, $scope.importedPlaylist).then(() => {
+        $http.post(`${serverEndpoint}/playlist-import`, $scope.importedPlaylist, {
+          headers: { user_id }
+        }).then(() => {
           $scope.importedPlaylist = {};
           $scope.loadPlaylists();
         });
