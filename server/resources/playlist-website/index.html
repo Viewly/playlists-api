@@ -533,8 +533,8 @@
         <div class="form-group">
         <label>Publish status:</label>
         <select ng-model="newPlaylist.status" class="form-control">
-          <option value="published">Published</option>
-          <option ng-if="admin" value="hidden">Hidden</option>
+          <option ng-if="admin" value="published">Published</option>
+          <option value="hidden">Hidden</option>
         </select>
       </div>
       <button type="submit" ng-disabled="thumbnail_uploading || !newPlaylist.title" class="btn btn-primary" ng-click="saveNewPlaylist()">Save</button>
@@ -625,8 +625,8 @@
           <div class="form-group">
             <label>Publish status:</label>
             <select ng-model="activePlaylist.status" class="form-control">
-              <option value="published">Published</option>
-              <option ng-if="admin" value="hidden">Hidden</option>
+              <option ng-if="admin" value="published">Published</option>
+              <option value="hidden">Hidden</option>
             </select>
           </div>
           <button type="submit" class="btn btn-primary" ng-disabled="thumbnail_uploading || !activePlaylist.title" ng-click="updatePlaylist()">Save</button>
