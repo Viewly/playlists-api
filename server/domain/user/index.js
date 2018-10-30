@@ -51,7 +51,7 @@ async function registerUser(user){
           g_refresh_token: user.g_refresh_token,
           email_confirmed: !!user.g_access_token
         }).into('user');
-        await Promise.all([emails.sendWelcomeEmail(user), sendConfirmEmailLink(user.email)]);
+        Promise.all([emails.sendWelcomeEmail(user), sendConfirmEmailLink(user.email)]);
         return { success: true, user: getCleanUserAndJwt(user), registered: true };
     }
 }
@@ -114,7 +114,6 @@ async function sendConfirmEmailLink(email) {
       const uuid = helpers.generateUuid();
       await db.from('user').update('email_confirm_token', uuid).where('email', email);
       await emails.sendConfirmEmail({email, email_confirm_token: uuid});
-      //Send email with the uuid
       return { success: true, message: "An email with confirmation link has been sent." }
     } else {
       return { success: false, message: "Email already confirmed." }
