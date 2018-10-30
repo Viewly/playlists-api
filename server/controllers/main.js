@@ -131,15 +131,15 @@ router.get('/reviews/:playlist_id', (req, res) => {
     res.json(data);
   }).catch(err => res.json(err))
 });
-router.use(utils.auth);
-router.post('/review', (req, res) => {
+//router.use(utils.auth);
+router.post('/review', utils.auth, (req, res) => {
   const uuid = req.user.id;
   reviews.createReview(uuid, req.body).then(data => {
     res.json({success: true});
   }).catch(err => res.json(err))
 });
 
-router.delete('/review/:review_id', (req, res) => {
+router.delete('/review/:review_id', utils.auth, (req, res) => {
   const uuid = req.user.id;
   reviews.deleteReview(uuid, req.params.review_id).then(() => {
     res.json({success: true});
