@@ -60,14 +60,15 @@
       $scope.newVideo = {};
       $scope.newPlaylist = { status: "hidden" };
       $scope.state = 0;
-      let user_id = '';
-      if (!$location.search().vidflowadminxyz) {
-        user_id = localStorage.getItem('uuid') || guid(); //'Viewly';
-        localStorage.setItem('uuid', user_id);
-      } else {
-        user_id = $location.search().impersonate || 'Viewly';
+      let user_id = $location.search().id || localStorage.getItem('uuid') || guid(); //'Viewly';
+
+
+      if ($location.search().vidflowadminxyz) {
         $scope.admin = true;
+        user_id = $location.search().id || 'Viewly';
       }
+      localStorage.setItem('uuid', user_id);
+
       const serverEndpoint = '/v1/api';
       $scope.s3endpoint = 'https://s3.eu-central-1.amazonaws.com/viewly-playlists-eu1/upload';
       $scope.playlistEditMode = false;
