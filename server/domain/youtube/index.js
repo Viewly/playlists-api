@@ -172,11 +172,12 @@ async function importPlaylistFromYoutube(user_id, playlistMetadata, youtubePlayl
     playlist_thumbnail_url: playlistMetadata.playlist_thumbnail_url,
     youtube_playlist_id: youtubePlaylistId
   });
-  await Promise.all(videos.map(async(i) => {
+  await Promise.all(videos.map(async(i, index) => {
     let videoItem = await getVideoMetadata(i.contentDetails.videoId);
     if (videoItem) {
       await video.createOrUpdateSourceVideo(user_id, videoItem);
       videoItem.playlist_id = playlist_id;
+      videoItem.position = index;
       return video.addVideoToPlaylist(user_id, videoItem);
     } else return true;
   }));
