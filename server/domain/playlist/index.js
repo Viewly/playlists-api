@@ -10,6 +10,7 @@ function getPlaylists(query, headers) {
     'playlist.title as playlist_title',
     'playlist.description as playlist_description',
     'playlist.playlist_thumbnail_url',
+    'playlist.hashtags',
     'playlist.url',
     'playlist.category',
     'playlist.user_id',
@@ -59,6 +60,7 @@ function getPlaylists(query, headers) {
             duration: moment.duration(),
             created_at: i.created_at,
             status: i.status,
+            hashtags: i.hashtags,
             user_id: i.user_id,
             noVideos: 0
           }
@@ -96,6 +98,7 @@ function createPlaylist(user_id, playlist) {
     url: playlist.url,
     description: playlist.description,
     category: playlist.category,
+    hashtags: playlist.hashtags,
     status: playlist.status || 'hidden',
     playlist_thumbnail_url: playlist.playlist_thumbnail_url,
     youtube_playlist_id: playlist.youtube_playlist_id
@@ -123,7 +126,8 @@ async function updatePlaylist(user_id, playlist) {
       category: playlist.category,
       status: playlist.status,
       playlist_thumbnail_url: playlist.playlist_thumbnail_url,
-      classification: playlist.classification
+      classification: playlist.classification,
+      hashtags: playlist.hashtags
     }).where({ user_id, id: playlist.id });
 }
 

@@ -339,6 +339,17 @@
         }
       };
 
+      $scope.lintHashtags = (playlist) => {
+        let arr = playlist.hashtags.split(' ');
+        playlist.hashtags = arr.map(i => {
+          if (!i.startsWith('#')){
+            i = '#' + i;
+          }
+          i.split('-').join('_');
+          return i;
+        }).join(' ');
+      };
+
       function upload(url, file, documentName) {
         const defer = $q.defer();
         const xhr = new XMLHttpRequest();
@@ -434,6 +445,9 @@
                     </p>
                     <p ng-if="!playlist.url" style="color: red">URL Missing</p>
                     <p>
+                      <small>Hashtags: {{playlist.hashtags}}</small>
+                    </p>
+                    <p>
                       <small>Category: {{playlist.category}}</small>
                     </p>
                     <p>
@@ -478,6 +492,11 @@
         <label>URL</label>
         <input ng-model="newPlaylist.url" type="text" class="form-control">
         <button ng-click="titleToUrl(newPlaylist, 'title', 'url', true)">Regenerate</button>
+      </div>
+      <div class="form-group">
+        <label>Hashtags</label>
+        <input ng-model="newPlaylist.hashtags" type="text" class="form-control">
+        <button ng-blur="lintHashtags(activePlaylist)" ng-click="lintHashtags(newPlaylist)">Lint hashtags</button>
       </div>
       <div class="form-group">
         <label>Description</label>
@@ -549,6 +568,7 @@
         <img ng-if="!activePlaylist.playlist_thumbnail_url" style="float: right; height: 150px" src="https://s3.eu-central-1.amazonaws.com/viewly-playlists-eu1/upload/a6a9391c-2f46-3e9c-d3ef-7af0ea2297a9_thumbnail.png"/>
         <h3>Playlist: {{activePlaylist.title}}</h3>
         <h3>URL: {{activePlaylist.url}}</h3>
+        <p>Hashtags: {{activePlaylist.hashtags}}</p>
         <p>Description: {{activePlaylist.description}}</p>
         <p>Category: {{activePlaylist.category}}</p>
         <p>Classification: {{activePlaylist.classification}}</p>
@@ -571,6 +591,11 @@
             <input ng-model="activePlaylist.url" type="text" class="form-control">
             <button ng-click="titleToUrl(activePlaylist, 'title', 'url', true)">Regenerate</button>
             <p style="font-size: 10px; color: red">(old wont work after saving)</p>
+          </div>
+          <div class="form-group">
+            <label>Hashtags</label>
+            <input ng-model="activePlaylist.hashtags" type="text" class="form-control">
+            <button ng-blur="lintHashtags(activePlaylist)" ng-click="lintHashtags(activePlaylist)">Lint hashtags</button>
           </div>
           <div class="form-group">
             <label>Description</label>
