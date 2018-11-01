@@ -340,6 +340,7 @@
       };
 
       $scope.lintHashtags = (playlist) => {
+        console.log("qqq", playlist);
         let arr = playlist.hashtags.split(' ');
         playlist.hashtags = arr.map(i => {
           if (!i.startsWith('#')){
@@ -494,9 +495,9 @@
         <button ng-click="titleToUrl(newPlaylist, 'title', 'url', true)">Regenerate</button>
       </div>
       <div class="form-group">
-        <label>Hashtags</label>
-        <input ng-model="newPlaylist.hashtags" type="text" class="form-control">
-        <button ng-blur="lintHashtags(activePlaylist)" ng-click="lintHashtags(newPlaylist)">Lint hashtags</button>
+        <label>Hashtags:</label>
+        <input ng-blur="lintHashtags(newPlaylist)" ng-model="newPlaylist.hashtags" type="text" class="form-control">
+        <button ng-click="lintHashtags(newPlaylist)">Lint hashtags</button>
       </div>
       <div class="form-group">
         <label>Description</label>
@@ -593,9 +594,9 @@
             <p style="font-size: 10px; color: red">(old wont work after saving)</p>
           </div>
           <div class="form-group">
-            <label>Hashtags</label>
-            <input ng-model="activePlaylist.hashtags" type="text" class="form-control">
-            <button ng-blur="lintHashtags(activePlaylist)" ng-click="lintHashtags(activePlaylist)">Lint hashtags</button>
+            <label>Hashtags:</label>
+            <input ng-blur="lintHashtags(activePlaylist)" ng-model="activePlaylist.hashtags" type="text" class="form-control">
+            <button ng-click="lintHashtags(activePlaylist)">Lint hashtags</button>
           </div>
           <div class="form-group">
             <label>Description</label>

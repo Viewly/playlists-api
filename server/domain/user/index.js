@@ -158,7 +158,9 @@ function userExists(email) {
 }
 
 async function getUserById(user_id) {
-  return db.select('*').from('user').where('id', user_id).reduce(helpers.getFirst).then(i => getCleanUserAndJwt(i));
+  let user = await db.select('*').from('user').where('id', user_id).reduce(helpers.getFirst).then(i => getCleanUserAndJwt(i));
+  user.playlists = await db.select('*').from('playlist').where('user_id', user_id);
+  return user;
 }
 
 module.exports = { registerUser, loginUser, resetPasswordRequest, resetPasswordProcess, registerOrLoginUser, updateUserPassword, sendConfirmEmailLink, confirmEmail, getUserById };

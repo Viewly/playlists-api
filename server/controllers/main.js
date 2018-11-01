@@ -5,6 +5,7 @@ const thumbnails = require('../domain/playlist/thumbnails');
 const video = require('../domain/video/index');
 const common = require('../domain/common/index');
 const reviews = require('../domain/reviews/index');
+const hashtags = require('../domain/hashtags/index');
 const utils = require('../utils/helpers');
 
 router.get('/playlists', (req, res) => {
@@ -143,6 +144,12 @@ router.delete('/review/:review_id', utils.auth, (req, res) => {
   const uuid = req.user.id;
   reviews.deleteReview(uuid, req.params.review_id).then(() => {
     res.json({success: true});
+  }).catch(err => res.json(err))
+});
+
+router.get('/hashtags', (req, res) => {
+  hashtags.getHashtags(req.query.search).then(data => {
+    res.json(data);
   }).catch(err => res.json(err))
 });
 module.exports = router;

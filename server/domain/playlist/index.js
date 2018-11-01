@@ -1,5 +1,6 @@
 const db = require('../../../db/knex');
 const video = require('../video/index');
+const hashtags = require('../hashtags/index');
 const utils = require('../../utils/helpers');
 const uuid = require('uuid');
 const moment = require('moment');
@@ -29,8 +30,11 @@ function getPlaylists(query, headers) {
   .modify(async (q) => {
     if (query && Object.keys(query).length > 0){
       let search = {};
+      //TODO: Clean up this mess
       const title = query.title;
+      const tags = query.hashtags;
       delete query.title;
+      delete query.hashtags;
       Object.keys(query).forEach(key => { search['playlist.' + key] = query[key]});
       q.where(search);
       if (title) {
@@ -41,6 +45,10 @@ function getPlaylists(query, headers) {
           log.email = headers.email;
         }
         await db.insert(log).into('searchlog');
+      }
+      if (tags) {
+        q.where('playlist.hashtags', 'ILIKE', `%${tags}%`);
+        await hashtags.saveAndIncrementHashtag(tags, false, true);
       }
     }
   })
@@ -91,6 +99,9 @@ function getPlaylist(playlist_id) {
 
 function createPlaylist(user_id, playlist) {
   const playlist_id = uuid.v4();
+  if (playlist.hashtags) {
+    hashtags.saveAndIncrementHashtag(playlist.hashtags, true);
+  }
   return db.insert({
     id: playlist_id,
     user_id: user_id,
@@ -118,6 +129,9 @@ async function deletePlaylist(user_id, playlist_id) {
 }
 
 async function updatePlaylist(user_id, playlist) {
+  if (playlist.hashtags) {
+    hashtags.saveAndIncrementHashtag(playlist.hashtags, true);
+  }
   return db.from('playlist').
     update({
       title: playlist.title,
@@ -140,6 +154,7 @@ async function playlistUuidConvert(playlist_id){
     return playlist.id;
   }
 }
+
 
 module.exports = {
   getPlaylists,
