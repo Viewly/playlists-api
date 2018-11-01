@@ -52,7 +52,7 @@ async function addVideoToPlaylist(user_id, video) {
         title: video.title,
         description: video.description,
         thumbnail_url: video.thumbnail_url,
-        position: total + 1,
+        position: video.position + 1 || total + 1,
       }).
         into('video').
         then(() => ({ success: true, data: { position: total + 1 } }));
