@@ -27,7 +27,11 @@ function getPlaylists(query, headers) {
   .leftJoin('video', 'video.playlist_id', 'playlist.id')
   .leftJoin('source_video', 'video.source_video_id', 'source_video.id')
   .orderBy('playlist.created_at', 'desc')
+  .offset(query.page * query.limit || 0)
+  .limit(query.limit || 50)
   .modify(async (q) => {
+    delete query.page;
+    delete query.limit;
     if (query && Object.keys(query).length > 0){
       let search = {};
       //TODO: Clean up this mess
