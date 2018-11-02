@@ -25,10 +25,9 @@ async function createOrUpdateSourceVideo(user_id, video) {
 }
 
 async function addVideoToPlaylist(user_id, video) {
-  const source = await  db.select('*').
+  const source = (await  db.select('*').
     from('source_video').
-    where('youtube_video_id', video.video_id).
-    reduce(i => i[0]);
+    where('youtube_video_id', video.video_id))[0];
 
   const isOwner = (await db.select('*').
     from('playlist').
