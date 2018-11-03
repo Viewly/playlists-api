@@ -2,7 +2,7 @@ const router = require('express').Router();
 const path = require('path');
 const user = require('../domain/user/index');
 
-router.get('/somerandom1235domain6777', (req, res) => {
+router.get('/managexyz', (req, res) => {
   res.sendFile(path.join(__dirname, '../resources/playlist-website/index.html'))
 });
 
