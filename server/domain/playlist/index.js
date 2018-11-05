@@ -1,5 +1,6 @@
 const db = require('../../../db/knex');
 const video = require('../video/index');
+const hashtags = require('../hashtags/index');
 const utils = require('../../utils/helpers');
 const uuid = require('uuid');
 const moment = require('moment');
@@ -26,11 +27,18 @@ function getPlaylists(query, headers) {
   .leftJoin('video', 'video.playlist_id', 'playlist.id')
   .leftJoin('source_video', 'video.source_video_id', 'source_video.id')
   .orderBy('playlist.created_at', 'desc')
+  .offset(query.page * query.limit || 0)
+  .limit(query.limit || 50)
   .modify(async (q) => {
+    delete query.page;
+    delete query.limit;
     if (query && Object.keys(query).length > 0){
       let search = {};
+      //TODO: Clean up this mess
       const title = query.title;
+      const tags = query.hashtags;
       delete query.title;
+      delete query.hashtags;
       Object.keys(query).forEach(key => { search['playlist.' + key] = query[key]});
       q.where(search);
       if (title) {
@@ -41,6 +49,9 @@ function getPlaylists(query, headers) {
           log.email = headers.email;
         }
         await db.insert(log).into('searchlog');
+      }
+      if (tags) {
+        q.where('playlist.hashtags', 'ILIKE', `%${tags}%`);
       }
     }
   })
@@ -102,7 +113,9 @@ function createPlaylist(user_id, playlist) {
     status: playlist.status || 'hidden',
     playlist_thumbnail_url: playlist.playlist_thumbnail_url,
     youtube_playlist_id: playlist.youtube_playlist_id
-  }).into('playlist').then(() => Promise.resolve(playlist_id));
+  }).into('playlist')
+  .then(() => hashtags.saveHashtags(playlist.hashtags, playlist_id))
+  .then(() => Promise.resolve(playlist_id));
 }
 
 function reorderPlaylist(user_id, playlist_id, videos) {
@@ -114,6 +127,7 @@ function reorderPlaylist(user_id, playlist_id, videos) {
 async function deletePlaylist(user_id, playlist_id) {
   await db.from('video').where({ user_id, playlist_id }).del();
   await db.from('playlist').where({ user_id, id: playlist_id }).del();
+  await db.from('hashtag').where({ playlist_id: playlist_id }).del();
   return true;
 }
 
@@ -128,7 +142,8 @@ async function updatePlaylist(user_id, playlist) {
       playlist_thumbnail_url: playlist.playlist_thumbnail_url,
       classification: playlist.classification,
       hashtags: playlist.hashtags
-    }).where({ user_id, id: playlist.id });
+    }).where({ user_id, id: playlist.id })
+    .then(() => hashtags.saveHashtags(playlist.hashtags, playlist.id));
 }
 
 async function playlistUuidConvert(playlist_id){
@@ -140,6 +155,7 @@ async function playlistUuidConvert(playlist_id){
     return playlist.id;
   }
 }
+
 
 module.exports = {
   getPlaylists,
