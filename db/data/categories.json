@@ -1,0 +1,90 @@
+[
+  {
+    "name": "Anime",
+    "slug": "anime"
+  },
+  {
+    "name": "Auto & Vehicles",
+    "slug": "auto-and-vehicles"
+  },
+  {
+    "name": "Beauty & Fashion",
+    "slug": "beauty-and-fashion"
+  },
+  {
+    "name": "Cartoons",
+    "slug": "cartoons"
+  },
+  {
+    "name": "Comedy",
+    "slug": "comedy"
+  },
+  {
+    "name": "Cooking & food",
+    "slug": "cooking-and-food"
+  },
+  {
+    "name": "Documentary",
+    "slug": "documentary"
+  },
+  {
+    "name": "Education",
+    "slug": "education"
+  },
+  {
+    "name": "Entertainment",
+    "slug": "entertainment"
+  },
+  {
+    "name": "Family Entertainment",
+    "slug": "family-entertainment"
+  },
+  {
+    "name": "Film & Animation",
+    "slug": "film-and-animation"
+  },
+  {
+    "name": "Gaming",
+    "slug": "gaming"
+  },
+  {
+    "name": "How to & Style",
+    "slug": "how-to-and-style"
+  },
+  {
+    "name": "Movies",
+    "slug": "movies"
+  },
+  {
+    "name": "Music",
+    "slug": "music"
+  },
+  {
+    "name": "News & Politics",
+    "slug": "news-and-politics"
+  },
+  {
+    "name": "Nonprofits & Activism",
+    "slug": "nonprofits-and-activism"
+  },
+  {
+    "name": "People & Blogs",
+    "slug": "people-and-blogs"
+  },
+  {
+    "name": "Pets & Animals",
+    "slug": "pets-and-animals"
+  },
+  {
+    "name": "Science & Technology",
+    "slug": "science-and-technology"
+  },
+  {
+    "name": "Sports",
+    "slug": "sports"
+  },
+  {
+    "name": "Travel & Events",
+    "slug": "travel-and-events"
+  }
+]

@@ -8,6 +8,7 @@ const creds = require(`./credentials.${process.env.NODE_ENV || 'staging'}`);
 const oAuthCreds = require(`./credentials.oauth.${process.env.NODE_ENV || 'staging'}`);
 const playlist = require('../playlist/index');
 const video = require('../video/index');
+const db = require('../../../db/knex');
 
 const categories = fs.readFileSync(path.join(__dirname, './categories.txt'), 'utf-8');
 const yt_categories = {};
@@ -119,7 +120,7 @@ async function getChannelThumbnail(channel_id){
 }
 
 function getCategories(){
-  return Object.keys(yt_categories).map(key => ({id: key, name: yt_categories[key]}))
+  return db.select('*').from('category');
 }
 
 async function getUserInfo(auth){
