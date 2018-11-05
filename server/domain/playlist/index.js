@@ -52,7 +52,6 @@ function getPlaylists(query, headers) {
       }
       if (tags) {
         q.where('playlist.hashtags', 'ILIKE', `%${tags}%`);
-        await hashtags.saveAndIncrementHashtag(tags, false, true);
       }
     }
   })
@@ -103,9 +102,6 @@ function getPlaylist(playlist_id) {
 
 function createPlaylist(user_id, playlist) {
   const playlist_id = uuid.v4();
-  if (playlist.hashtags) {
-    hashtags.saveAndIncrementHashtag(playlist.hashtags, true);
-  }
   return db.insert({
     id: playlist_id,
     user_id: user_id,
@@ -117,7 +113,9 @@ function createPlaylist(user_id, playlist) {
     status: playlist.status || 'hidden',
     playlist_thumbnail_url: playlist.playlist_thumbnail_url,
     youtube_playlist_id: playlist.youtube_playlist_id
-  }).into('playlist').then(() => Promise.resolve(playlist_id));
+  }).into('playlist')
+  .then(() => hashtags.saveHashtags(playlist.hashtags, playlist_id))
+  .then(() => Promise.resolve(playlist_id));
 }
 
 function reorderPlaylist(user_id, playlist_id, videos) {
@@ -129,13 +127,11 @@ function reorderPlaylist(user_id, playlist_id, videos) {
 async function deletePlaylist(user_id, playlist_id) {
   await db.from('video').where({ user_id, playlist_id }).del();
   await db.from('playlist').where({ user_id, id: playlist_id }).del();
+  await db.from('hashtag').where({ playlist_id: playlist_id }).del();
   return true;
 }
 
 async function updatePlaylist(user_id, playlist) {
-  if (playlist.hashtags) {
-    hashtags.saveAndIncrementHashtag(playlist.hashtags, true);
-  }
   return db.from('playlist').
     update({
       title: playlist.title,
@@ -146,7 +142,8 @@ async function updatePlaylist(user_id, playlist) {
       playlist_thumbnail_url: playlist.playlist_thumbnail_url,
       classification: playlist.classification,
       hashtags: playlist.hashtags
-    }).where({ user_id, id: playlist.id });
+    }).where({ user_id, id: playlist.id })
+    .then(() => hashtags.saveHashtags(playlist.hashtags, playlist.id));
 }
 
 async function playlistUuidConvert(playlist_id){

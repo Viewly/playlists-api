@@ -1,20 +1,11 @@
 const db = require('../../../db/knex');
 
-async function saveAndIncrementHashtag(hashtags, save, increment){
-  hashtags = lintHashtags(hashtags).split(' ');
-  let existing = await db.select('*').from('hashtag').whereIn('hashtag', hashtags);
-  let ids = existing.map(i => i.id);
-  let newTags = hashtags.filter(i => existing.findIndex(x => x.hashtag === i) === -1);
-  if (save) {
-    await Promise.all(newTags.map((i) => {
-      return db.insert({ hashtag: i, search_count: 1 }).into('hashtag');
-    }));
-  }
-  if (increment) {
-    await Promise.all(ids.map((id) => {
-      return db.increment('search_count', 1).where('id', id).from('hashtag');
-    }));
-  }
+async function saveHashtags(hashtags, playlist_id){
+  await db.del().from('hashtag').where('playlist_id', playlist_id);
+
+  await Promise.all(lintHashtagsToArray(hashtags).map(hashtag => {
+    return db.insert({hashtag, playlist_id}).into('hashtag')
+  }));
   return true;
 }
 
@@ -26,15 +17,15 @@ async function getHashtags(search){
   });
 }
 
-function lintHashtags(hashtags) {
+function lintHashtagsToArray(hashtags) {
   return hashtags.split(' ').map(i => {
     if (!i.startsWith('#')){
       i = '#' + i;
     }
     i.split('-').join('_');
     return i;
-  }).join(' ');
+  });
 
 }
 
-module.exports = { saveAndIncrementHashtag, getHashtags };
+module.exports = { saveHashtags, getHashtags };
