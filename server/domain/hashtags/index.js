@@ -3,7 +3,7 @@ const db = require('../../../db/knex');
 async function saveHashtags(hashtags, playlist_id){
   await db.del().from('hashtag').where('playlist_id', playlist_id);
 
-  await Promise.all(lintHashtagsToArray(hashtags).map(hashtag => {
+  hashtags && await Promise.all(lintHashtagsToArray(hashtags).map(hashtag => {
     return db.insert({hashtag, playlist_id}).into('hashtag')
   }));
   return true;
@@ -17,7 +17,7 @@ async function getHashtags(search){
   });
 }
 
-function lintHashtagsToArray(hashtags) {
+function lintHashtagsToArray(hashtags = []) {
   return hashtags.split(' ').map(i => {
     if (!i.startsWith('#')){
       i = '#' + i;
