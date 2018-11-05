@@ -66,6 +66,12 @@ const auth = (req, res, next) => {
   });
 };
 
+function deleteProps(obj, props) {
+  props.forEach((prop) => {
+    delete obj[prop]
+  })
+}
+
 module.exports = {
   getFirst,
   getParameterByName,
@@ -75,5 +81,6 @@ module.exports = {
   compareBcryptHash,
   durationToReadable,
   auth,
-  validateUuid
+  validateUuid,
+  deleteProps
 };

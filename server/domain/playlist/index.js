@@ -15,7 +15,7 @@ function getPlaylists(query, headers) {
     'playlist.playlist_thumbnail_url',
     'playlist.hashtags',
     'playlist.url',
-    'playlist.category',
+    'playlist.category_id',
     'playlist.user_id',
     'playlist.status',
     'playlist.classification',
@@ -23,11 +23,15 @@ function getPlaylists(query, headers) {
     'video.id',
     'video.title',
     'video.description',
-    'source_video.duration'
+    'source_video.duration',
+    'category.id as category_id',
+    'category.name as category_name',
+    'category.slug as category_slug'
   ];
   return db.select(db.raw(fields.join(','))).from('playlist')
   .leftJoin('video', 'video.playlist_id', 'playlist.id')
   .leftJoin('source_video', 'video.source_video_id', 'source_video.id')
+  .leftJoin('category', 'playlist.category_id', 'category.id')
   .orderBy('playlist.created_at', 'desc')
   .modify(async (q) => {
     delete query.page;
@@ -37,8 +41,10 @@ function getPlaylists(query, headers) {
       //TODO: Clean up this mess
       const title = query.title;
       const tags = query.hashtags;
+      const slug = query.slug;
       delete query.title;
       delete query.hashtags;
+      delete query.slug;
       Object.keys(query).forEach(key => { search['playlist.' + key] = query[key]});
       q.where(search);
       if (title) {
@@ -52,6 +58,9 @@ function getPlaylists(query, headers) {
       }
       if (tags) {
         q.where('playlist.hashtags', 'ILIKE', `%${tags}%`);
+      }
+      if (slug) {
+        q.where('category.slug', '=', slug);
       }
     }
   })
@@ -67,7 +76,11 @@ function getPlaylists(query, headers) {
             playlist_thumbnail_url: i.playlist_thumbnail_url,
             description: i.playlist_description,
             classification: i.classification,
-            category: i.category,
+            category: {
+              id: i.category_id,
+              name: i.category_name,
+              slug: i.category_slug
+            },
             duration: moment.duration(),
             created_at: i.created_at,
             status: i.status,
@@ -92,10 +105,27 @@ function getPlaylists(query, headers) {
 }
 
 function getPlaylist(playlist_id) {
+  const fields = [
+    'playlist.*',
+    'category.id as category_id',
+    'category.name as category_name',
+    'category.slug as category_slug'
+  ];
+
   return Promise.all([
-    db.select('*').from('playlist').where('id', playlist_id).reduce(i => i[0]),
-    video.getVideosForPlaylist(playlist_id)]).then(data => {
-    data[0].videos = data[1];
+    db.select(db.raw(fields.join(','))).from('playlist')
+    .leftJoin('category', 'category.id', 'playlist.category_id')
+    .where('playlist.id', playlist_id).reduce(i => i[0]),
+    video.getVideosForPlaylist(playlist_id),
+    ]).then(data => {
+      const playlist = data[0];
+    playlist.category =  {
+      id: playlist.category_id,
+      name: playlist.category_name,
+      slug: playlist.category_slug
+    };
+    utils.deleteProps(playlist, ['category_id', 'category_name', 'category_slug']);
+    playlist.videos = data[1];
     return Promise.resolve(data[0]);
   });
 }
@@ -108,7 +138,7 @@ function createPlaylist(user_id, playlist) {
     title: playlist.title,
     url: playlist.url,
     description: playlist.description,
-    category: playlist.category,
+    category_id: playlist.category_id,
     hashtags: playlist.hashtags,
     status: playlist.status || 'hidden',
     playlist_thumbnail_url: playlist.playlist_thumbnail_url,
@@ -131,13 +161,12 @@ async function deletePlaylist(user_id, playlist_id) {
   return true;
 }
 
-async function updatePlaylist(user_id, playlist) {
-  return db.from('playlist').
+async function updatePlaylist(user_id, playlist) {return db.from('playlist').
     update({
       title: playlist.title,
       url: playlist.url,
       description: playlist.description,
-      category: playlist.category,
+      category_id: playlist.category.id,
       status: playlist.status,
       playlist_thumbnail_url: playlist.playlist_thumbnail_url,
       classification: playlist.classification,

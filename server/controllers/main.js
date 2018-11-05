@@ -88,7 +88,9 @@ router.get('/video-prefill', (req, res) => {
 });
 
 router.get('/categories', (req, res) => {
-  res.json(youtube.getCategories());
+  youtube.getCategories().then(data => {
+    res.json(data)
+  }).catch(err => res.json(err));
 });
 
 router.put('/video', (req, res) => {
