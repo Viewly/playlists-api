@@ -6,6 +6,8 @@ const uuid = require('uuid');
 const moment = require('moment');
 
 function getPlaylists(query, headers) {
+  const limit = query.limit;
+  const page = query.page;
   const fields = [
     'playlist.id as playlist_id',
     'playlist.title as playlist_title',
@@ -27,8 +29,6 @@ function getPlaylists(query, headers) {
   .leftJoin('video', 'video.playlist_id', 'playlist.id')
   .leftJoin('source_video', 'video.source_video_id', 'source_video.id')
   .orderBy('playlist.created_at', 'desc')
-  .offset(query.page * query.limit || 0)
-  .limit(query.limit || 50)
   .modify(async (q) => {
     delete query.page;
     delete query.limit;
@@ -86,7 +86,7 @@ function getPlaylists(query, headers) {
           let playlist = playlistMap[i];
           playlist.duration = utils.durationToReadable(playlist.duration);
           return Object.assign({id: i}, playlist)
-      });
+      }).slice(page * limit, (page + 1) * limit);
       return Promise.resolve(playlists);
   });
 }
