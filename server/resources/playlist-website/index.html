@@ -79,7 +79,7 @@
         clearUploadData();
         $scope.state = 0;
         let query = user_id === 'Viewly' ? null : { user_id };
-        $http.get(`${serverEndpoint}/playlists`, { params: query }).then(data => {
+        $http.get(`${serverEndpoint}/playlists?limit=500`, { params: query }).then(data => {
           $scope.playlists = data.data;
         });
       };
