@@ -1,13 +1,14 @@
 const db = require('../../../db/knex');
 const video = require('../video/index');
-const hashtags = require('../hashtags/index');
+const hashtag = require('../hashtags/index');
 const utils = require('../../utils/helpers');
 const uuid = require('uuid');
 const moment = require('moment');
 
 function getPlaylists(query, headers) {
-  const limit = query.limit;
-  const page = query.page;
+  const { limit, page, title, hashtags, slug  }  = query;
+  utils.deleteProps(query, ['page', 'limit', 'title', 'hashtags', 'slug']);
+
   const fields = [
     'playlist.id as playlist_id',
     'playlist.title as playlist_title',
@@ -34,20 +35,13 @@ function getPlaylists(query, headers) {
   .leftJoin('category', 'playlist.category_id', 'category.id')
   .orderBy('playlist.created_at', 'desc')
   .modify(async (q) => {
-    delete query.page;
-    delete query.limit;
-    if (query && Object.keys(query).length > 0){
-      let search = {};
-      //TODO: Clean up this mess
-      const title = query.title;
-      const tags = query.hashtags;
-      const slug = query.slug;
-      delete query.title;
-      delete query.hashtags;
-      delete query.slug;
-      Object.keys(query).forEach(key => { search['playlist.' + key] = query[key]});
-      q.where(search);
-      if (title) {
+
+      if (Object.keys(query).length > 0) { //General search by attributes
+        let search = {};
+        Object.keys(query).forEach(key => { search['playlist.' + key] = query[key]});
+        q.where(search);
+      }
+      if (title) { // ILIKE search by title
         q.where('playlist.title', 'ILIKE', `%${title}%`);
         let log = {keyword: title};
         if (headers) {
@@ -56,13 +50,13 @@ function getPlaylists(query, headers) {
         }
         await db.insert(log).into('searchlog');
       }
-      if (tags) {
-        q.where('playlist.hashtags', 'ILIKE', `%${tags}%`);
+      if (hashtags) { // ILIKE search by hashtags
+        q.where('playlist.hashtags', 'ILIKE', `%${hashtags}%`);
       }
-      if (slug) {
+      if (slug) { // Exact search by slug (category shortname)
         q.where('category.slug', '=', slug);
       }
-    }
+
   })
     .then(data => {
       const playlistMap = {};
@@ -144,7 +138,7 @@ function createPlaylist(user_id, playlist) {
     playlist_thumbnail_url: playlist.playlist_thumbnail_url,
     youtube_playlist_id: playlist.youtube_playlist_id
   }).into('playlist')
-  .then(() => hashtags.saveHashtags(playlist.hashtags, playlist_id))
+  .then(() => hashtag.saveHashtags(playlist.hashtags, playlist_id))
   .then(() => Promise.resolve(playlist_id));
 }
 
@@ -172,7 +166,7 @@ async function updatePlaylist(user_id, playlist) {return db.from('playlist').
       classification: playlist.classification,
       hashtags: playlist.hashtags
     }).where({ user_id, id: playlist.id })
-    .then(() => hashtags.saveHashtags(playlist.hashtags, playlist.id));
+    .then(() => hashtag.saveHashtags(playlist.hashtags, playlist.id));
 }
 
 async function playlistUuidConvert(playlist_id){
