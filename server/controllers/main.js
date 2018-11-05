@@ -9,6 +9,8 @@ const hashtags = require('../domain/hashtags/index');
 const utils = require('../utils/helpers');
 
 router.get('/playlists', (req, res) => {
+  req.query.page = parseInt(req.query.page || 0);
+  req.query.limit = parseInt(req.query.limit || 50);
   playlist.getPlaylists(req.query, req.headers).then(playlists => {
     res.json(playlists);
   }).catch(err => res.json(err))
