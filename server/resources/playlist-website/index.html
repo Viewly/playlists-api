@@ -61,6 +61,7 @@
       $scope.newPlaylist = { status: "hidden", category: {} };
       $scope.state = 0;
       $scope.search = {};
+      $scope.filterResults = {};
       let user_id = $location.search().id || localStorage.getItem('uuid') || guid(); //'Viewly';
 
 
@@ -82,6 +83,7 @@
         let query = user_id === 'Viewly' ? null : { user_id };
         $http.get(`${serverEndpoint}/playlists?limit=500`, { params: query }).then(data => {
           $scope.playlists = data.data;
+          $scope.calculateVideoNo();
         });
       };
 
@@ -352,11 +354,15 @@
         }).join(' ');
       };
 
-      $scope.calculateVideoNo = (list = []) => {
+      $scope.calculateVideoNo = (list = $scope.playlists) => {
         let total = 0;
+        let totalDuration = moment.duration();
         list.forEach(i => {
           total+=i.noVideos;
+          totalDuration.add(moment.duration(i.duration));
         });
+        $scope.filterResults.duration = (moment.utc(totalDuration.as('milliseconds')).format('HH:mm:ss'));
+        $scope.filterResults.totalVideos = total;
         return total;
       };
 
@@ -439,8 +445,8 @@
         <div class="row">
           <div class="col-sm-offset-4 col-sm-4" style="text-align: center; margin-bottom: 20px">
             <label>Search by anything</label>
-            <input placeholder="#something, hidden, published, Cooking.." type="text" ng-model="search.title" class="form-control">
-            <p>Playlists: {{filtered.length}} | Videos: {{calculateVideoNo(filtered || playlists)}}</p>
+            <input placeholder="#something, hidden, published, Cooking.." type="text"  ng-model="search.title" class="form-control">
+            <p>Playlists: {{filtered.length}} | Videos: {{calculateVideoNo(filtered || playlists)}} | Duration: {{filterResults.duration}}</p>
           </div>
         </div>
         <div class="row">
