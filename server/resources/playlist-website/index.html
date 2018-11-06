@@ -421,7 +421,8 @@
 </head>
 <body>
 <div ng-app="stitch-playlist-creator" ng-controller="main" class="container">
-  <h3>Welcome to Stitch Playlist Creator!</h3>
+  <img style="height: 30px; float: right; margin-top: 30px" src="https://s3.eu-central-1.amazonaws.com/viewly-playlists-website/images/logo-ffe936e5.svg" alt="">
+  <h3>Vidflow Playlist Manager</h3>
   <div class="row">
     <div class="col-sm-6">
       <button class="btn btn-sm btn-success" ng-show="state !== 1" ng-click="state = 1">Create
@@ -438,6 +439,7 @@
       </button>
       <button class="btn btn-sm btn-info" ng-show="state !== 5" ng-click="state = 5">Import YT playlist</button>
     </div>
+
   </div>
 
   <div class="row" ng-if="state == 0">
@@ -452,10 +454,8 @@
           </div>
         </div>
         <div class="row">
-          <ul class="thumbnails">
             <div class="col-md-4" ng-repeat="playlist in playlists | filter: search.title as filtered">
               <div class="thumbnail">
-                <!--<img src="http://placehold.it/320x200" alt="ALT NAME" class="img-responsive" />-->
                 <img ng-if="playlist.playlist_thumbnail_url" class="img-responsive" src="{{s3endpoint + '/' + playlist.playlist_thumbnail_url}}" alt=""/>
                 <img ng-if="!playlist.playlist_thumbnail_url" class="img-responsive" src="https://s3.eu-central-1.amazonaws.com/viewly-playlists-eu1/upload/a6a9391c-2f46-3e9c-d3ef-7af0ea2297a9_thumbnail.png"/>
                 <div class="caption">
@@ -502,7 +502,6 @@
                 </div>
               </div>
             </div>
-          </ul>
         </div>
       </div>
     </div>
