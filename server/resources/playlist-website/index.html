@@ -60,6 +60,7 @@
       $scope.newVideo = {};
       $scope.newPlaylist = { status: "hidden", category: {} };
       $scope.state = 0;
+      $scope.search = {};
       let user_id = $location.search().id || localStorage.getItem('uuid') || guid(); //'Viewly';
 
 
@@ -351,6 +352,14 @@
         }).join(' ');
       };
 
+      $scope.calculateVideoNo = (list = []) => {
+        let total = 0;
+        list.forEach(i => {
+          total+=i.noVideos;
+        });
+        return total;
+      };
+
       function upload(url, file, documentName) {
         const defer = $q.defer();
         const xhr = new XMLHttpRequest();
@@ -428,8 +437,15 @@
       <h4>Current Playlists</h4>
       <div class="container">
         <div class="row">
+          <div class="col-sm-offset-4 col-sm-4" style="text-align: center; margin-bottom: 20px">
+            <label>Search by anything</label>
+            <input placeholder="#something, hidden, published, Cooking.." type="text" ng-model="search.title" class="form-control">
+            <p>Playlists: {{filtered.length}} | Videos: {{calculateVideoNo(filtered || playlists)}}</p>
+          </div>
+        </div>
+        <div class="row">
           <ul class="thumbnails">
-            <div class="col-md-4" ng-repeat="playlist in playlists">
+            <div class="col-md-4" ng-repeat="playlist in playlists | filter: search.title as filtered">
               <div class="thumbnail">
                 <!--<img src="http://placehold.it/320x200" alt="ALT NAME" class="img-responsive" />-->
                 <img ng-if="playlist.playlist_thumbnail_url" class="img-responsive" src="{{s3endpoint + '/' + playlist.playlist_thumbnail_url}}" alt=""/>
