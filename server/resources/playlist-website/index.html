@@ -361,7 +361,9 @@
           total+=i.noVideos;
           totalDuration.add(moment.duration(i.duration));
         });
-        $scope.filterResults.duration = (moment.utc(totalDuration.as('milliseconds')).format('HH:mm:ss'));
+        let hours = Math.floor(totalDuration.asHours());
+        let mins = Math.floor(totalDuration.asMinutes()) - hours * 60;
+        $scope.filterResults.duration = `${hours}h:${mins}m`;
         $scope.filterResults.totalVideos = total;
         return total;
       };
