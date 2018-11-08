@@ -6,8 +6,8 @@ const uuid = require('uuid');
 const moment = require('moment');
 
 function getPlaylists(query, headers) {
-  const { limit, page, title, hashtags, slug  }  = query;
-  utils.deleteProps(query, ['page', 'limit', 'title', 'hashtags', 'slug']);
+  const { limit, page, title, hashtags, slug, order  }  = query;
+  utils.deleteProps(query, ['page', 'limit', 'title', 'hashtags', 'slug', 'order']);
 
   const fields = [
     'playlist.id as playlist_id',
@@ -21,6 +21,7 @@ function getPlaylists(query, headers) {
     'playlist.status',
     'playlist.classification',
     'playlist.created_at',
+    'playlist.publish_date',
     'video.id',
     'video.title',
     'video.description',
@@ -33,7 +34,7 @@ function getPlaylists(query, headers) {
   .leftJoin('video', 'video.playlist_id', 'playlist.id')
   .leftJoin('source_video', 'video.source_video_id', 'source_video.id')
   .leftJoin('category', 'playlist.category_id', 'category.id')
-  .orderBy('playlist.created_at', 'desc')
+  .orderBy(`playlist.${order || 'created_at'}`, 'desc')
   .modify(async (q) => {
 
       if (Object.keys(query).length > 0) { //General search by attributes
@@ -80,7 +81,8 @@ function getPlaylists(query, headers) {
             status: i.status,
             hashtags: i.hashtags,
             user_id: i.user_id,
-            noVideos: 0
+            noVideos: 0,
+            publish_date: i.publish_date
           }
         }
         if (i.id) {
@@ -136,7 +138,8 @@ function createPlaylist(user_id, playlist) {
     hashtags: playlist.hashtags,
     status: playlist.status || 'hidden',
     playlist_thumbnail_url: playlist.playlist_thumbnail_url,
-    youtube_playlist_id: playlist.youtube_playlist_id
+    youtube_playlist_id: playlist.youtube_playlist_id,
+    publish_date: playlist.status === 'published' ? new Date(): null
   }).into('playlist')
   .then(() => hashtag.saveHashtags(playlist.hashtags, playlist_id))
   .then(() => Promise.resolve(playlist_id));
@@ -155,7 +158,8 @@ async function deletePlaylist(user_id, playlist_id) {
   return true;
 }
 
-async function updatePlaylist(user_id, playlist) {return db.from('playlist').
+async function updatePlaylist(user_id, playlist) {
+  return db.from('playlist').
     update({
       title: playlist.title,
       url: playlist.url,
@@ -164,7 +168,8 @@ async function updatePlaylist(user_id, playlist) {return db.from('playlist').
       status: playlist.status,
       playlist_thumbnail_url: playlist.playlist_thumbnail_url,
       classification: playlist.classification,
-      hashtags: playlist.hashtags
+      hashtags: playlist.hashtags,
+      publish_date: playlist.publish_date
     }).where({ user_id, id: playlist.id })
     .then(() => hashtag.saveHashtags(playlist.hashtags, playlist.id));
 }

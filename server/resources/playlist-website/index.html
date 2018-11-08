@@ -368,6 +368,15 @@
         return total;
       };
 
+      $scope.updatePublishDate = (playlist, force) => {
+        if (force) {
+          playlist.publish_date = new Date();
+        }
+        else if (playlist.status === 'published' && !playlist.publish_date) {
+          playlist.publish_date = new Date();
+        }
+      };
+
       function upload(url, file, documentName) {
         const defer = $q.defer();
         const xhr = new XMLHttpRequest();
@@ -494,6 +503,7 @@
                       <span style="color: green" ng-if="playlist.status == 'published'" class="glyphicon glyphicon-ok"></span>
                       <span style="color: red" ng-if="playlist.status == 'hidden'" class="glyphicon glyphicon-remove"></span>
                     </small>
+                    <small ng-if="playlist.publish_date">({{playlist.publish_date | date: 'dd.MM.yyyy'}})</small>
                   </p>
                   <button class="btn btn-primary btn-sm btn-block"
                           ng-click="editPlaylist(playlist)">Edit
@@ -576,11 +586,15 @@
 
         <div class="form-group">
         <label>Publish status:</label>
-        <select ng-model="newPlaylist.status" class="form-control">
+        <select ng-model="newPlaylist.status" ng-change="updatePublishDate(newPlaylist)" class="form-control">
           <option ng-if="admin" value="published">Published</option>
           <option value="hidden">Hidden</option>
         </select>
-      </div>
+          <small ng-if="newPlaylist.publish_date">
+            ({{newPlaylist.publish_date | date: 'dd.MM.yyyy'}})
+            <button ng-click="updatePublishDate(newPlaylist, true)">Update</button>
+          </small>
+        </div>
       <button type="submit" ng-disabled="thumbnail_uploading || !newPlaylist.title" class="btn btn-primary" ng-click="saveNewPlaylist()">Save</button>
     </form>
 
@@ -601,6 +615,7 @@
         <p>Publish status:
           <span style="color: green" ng-if="activePlaylist.status == 'published'" class="glyphicon glyphicon-ok"></span>
           <span style="color: red" ng-if="activePlaylist.status == 'hidden'" class="glyphicon glyphicon-remove"></span>
+          <small ng-if="activePlaylist.publish_date">({{activePlaylist.publish_date | date: 'dd.MM.yyyy HH:mm'}})</small>
         </p>
         <button style="float: right" class="btn btn btn-warning" ng-click="playlistEdit()">Edit/Reorder</button>
         <button style="float: left" class="btn btn btn-danger" ng-click="playlistDelete()">Delete</button>
@@ -643,6 +658,7 @@
               <option ng-value="'community_favorite'">Community Favorite</option>
             </select>
           </div>
+
           <div class="form-group">
             <label>Thumbnail</label>
             <div class="upload-row row row-center">
@@ -675,10 +691,14 @@
           </div>
           <div class="form-group">
             <label>Publish status:</label>
-            <select ng-model="activePlaylist.status" class="form-control">
+            <select ng-model="activePlaylist.status" class="form-control" ng-change="updatePublishDate(activePlaylist)">
               <option ng-if="admin" value="published">Published</option>
               <option value="hidden">Hidden</option>
             </select>
+            <small ng-if="activePlaylist.publish_date">
+              ({{activePlaylist.publish_date | date: 'dd.MM.yyyy'}})
+              <button ng-click="updatePublishDate(activePlaylist, true)">Update</button>
+            </small>
           </div>
           <button type="submit" class="btn btn-primary" ng-disabled="thumbnail_uploading || !activePlaylist.title" ng-click="updatePlaylist()">Save</button>
         </form>
