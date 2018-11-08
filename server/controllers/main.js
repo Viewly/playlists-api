@@ -152,7 +152,7 @@ router.delete('/review/:review_id', utils.auth, (req, res) => {
 });
 
 router.get('/hashtags', (req, res) => {
-  hashtags.getHashtags(req.query.search).then(data => {
+  hashtags.getHashtags(req.query.limit).then(data => {
     res.json(data);
   }).catch(err => res.json(err))
 });

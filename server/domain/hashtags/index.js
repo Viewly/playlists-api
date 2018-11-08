@@ -9,12 +9,8 @@ async function saveHashtags(hashtags, playlist_id){
   return true;
 }
 
-async function getHashtags(search){
-  return db.select('*').from('hashtag').orderBy('search_count', 'desc').modify(q => {
-    if (search) {
-      q.where('hashtag', 'ILIKE', search);
-    }
-  });
+async function getHashtags(limit = 20){
+  return db.raw(`select hashtag, count(id) as mentions from hashtag group by hashtag order by mentions desc limit ${limit};`).then(a => Promise.resolve(a.rows))
 }
 
 function lintHashtagsToArray(hashtags = []) {
