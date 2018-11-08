@@ -6,8 +6,8 @@ const uuid = require('uuid');
 const moment = require('moment');
 
 function getPlaylists(query, headers) {
-  const { limit, page, title, hashtags, slug, order  }  = query;
-  utils.deleteProps(query, ['page', 'limit', 'title', 'hashtags', 'slug', 'order']);
+  let { limit, page, title, hashtags, slug, order, q  }  = query;
+  utils.deleteProps(query, ['page', 'limit', 'title', 'hashtags', 'slug', 'order', 'q']);
 
   const fields = [
     'playlist.id as playlist_id',
@@ -35,15 +35,20 @@ function getPlaylists(query, headers) {
   .leftJoin('source_video', 'video.source_video_id', 'source_video.id')
   .leftJoin('category', 'playlist.category_id', 'category.id')
   .orderBy(`playlist.${order || 'created_at'}`, 'desc')
-  .modify(async (q) => {
+  .modify(async (tx) => {
 
       if (Object.keys(query).length > 0) { //General search by attributes
         let search = {};
         Object.keys(query).forEach(key => { search['playlist.' + key] = query[key]});
-        q.where(search);
+        tx.where(search);
+      }
+      if (q) {
+        tx.orWhere('playlist.title', 'ILIKE', `%${q}%`)
+        .orWhere('playlist.description', 'ILIKE', `%${q}%`)
+        .orWhere('playlist.hashtags', 'ILIKE', `%${q}%`);
       }
       if (title) { // ILIKE search by title
-        q.where('playlist.title', 'ILIKE', `%${title}%`);
+        tx.where('playlist.title', 'ILIKE', `%${title}%`);
         let log = {keyword: title};
         if (headers) {
           log.identifier = headers.identifier;
@@ -52,10 +57,10 @@ function getPlaylists(query, headers) {
         await db.insert(log).into('searchlog');
       }
       if (hashtags) { // ILIKE search by hashtags
-        q.where('playlist.hashtags', 'ILIKE', `%${hashtags}%`);
+        tx.where('playlist.hashtags', 'ILIKE', `%${hashtags}%`);
       }
       if (slug) { // Exact search by slug (category shortname)
-        q.where('category.slug', '=', slug);
+        tx.where('category.slug', '=', slug);
       }
 
   })
