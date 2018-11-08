@@ -40,15 +40,16 @@ function getPlaylists(query, headers) {
       if (Object.keys(query).length > 0) { //General search by attributes
         let search = {};
         Object.keys(query).forEach(key => { search['playlist.' + key] = query[key]});
-        tx.where(search);
+        tx.andWhere(search);
       }
       if (q) {
-        tx.orWhere('playlist.title', 'ILIKE', `%${q}%`)
-        .orWhere('playlist.description', 'ILIKE', `%${q}%`)
-        .orWhere('playlist.hashtags', 'ILIKE', `%${q}%`);
+        let sub = db.from("playlist").select('id').where('title', 'ILIKE', `%${q}%`)
+        .orWhere('description', 'ILIKE', `%${q}%`)
+        .orWhere('hashtags', 'ILIKE', `%${q}%`);
+        tx.where('playlist.id', 'in', sub);
       }
       if (title) { // ILIKE search by title
-        tx.where('playlist.title', 'ILIKE', `%${title}%`);
+        tx.andWhere('playlist.title', 'ILIKE', `%${title}%`);
         let log = {keyword: title};
         if (headers) {
           log.identifier = headers.identifier;
@@ -57,10 +58,10 @@ function getPlaylists(query, headers) {
         await db.insert(log).into('searchlog');
       }
       if (hashtags) { // ILIKE search by hashtags
-        tx.where('playlist.hashtags', 'ILIKE', `%${hashtags}%`);
+        tx.andWhere('playlist.hashtags', 'ILIKE', `%${hashtags}%`);
       }
       if (slug) { // Exact search by slug (category shortname)
-        tx.where('category.slug', '=', slug);
+        tx.andWhere('category.slug', '=', slug);
       }
 
   })
