@@ -83,4 +83,22 @@
 * Ex: `/api/review/66254caa-7266-4687-941d-bd55140d7925`
 * The auth token that needs to be sent in every request that requires authentication. Like: `headers["authorization"] = jwt`
 
+# Update Onboarding
+**URL** : `/api/user/onboarding`
+**Method** : `PUT`
+**Auth required** : YES
+## Notes
+* The current attributes are: 
+- categories_ids [] - Array of the favorite categories of the user
+- time_to_spend - The amount of time he thinks he would spend on Vidflow
+- step - the onboarding step (1,2,3..)
+* The auth token that needs to be sent in every request that requires authentication. Like: `headers["authorization"] = jwt`
+* All users have onboarding row when they get registered, so it is not necessary to create manually. The request is `PUT` only
 
+# Get Onboarding
+**URL** : `/api/user/onboarding`
+**Method** : `GET`
+**Auth required** : YES
+## Notes
+* Gets the onboarding data for a user. Attributes above
+* The auth token that needs to be sent in every request that requires authentication. Like: `headers["authorization"] = jwt`
