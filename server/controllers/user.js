@@ -98,4 +98,18 @@ router.delete('/bookmark/:bookmark_id', (req, res) => {
     res.json({success: true});
   }).catch(err => res.json(err));
 });
+
+router.put('/onboarding', (req, res) => {
+  const uuid = req.user.id;
+  users.updateOnboarding(uuid, req.body).then(data => {
+    res.json({success: true});
+  }).catch(err => res.json(err));
+});
+
+router.get('/onboarding', (req, res) => {
+  const uuid = req.user.id;
+  users.getOnboarding(uuid).then(data => {
+    res.json(data);
+  }).catch(err => res.json(err));
+});
 module.exports = router;
