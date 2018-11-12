@@ -51,6 +51,7 @@ async function registerUser(user){
           g_refresh_token: user.g_refresh_token,
           email_confirmed: !!user.g_access_token
         }).into('user');
+        await createOnboarding(user.id);
         Promise.all([emails.sendWelcomeEmail(user), sendConfirmEmailLink(user.email)]);
         return { success: true, user: getCleanUserAndJwt(user), registered: true };
     }
@@ -163,4 +164,19 @@ async function getUserById(user_id) {
   return user;
 }
 
-module.exports = { registerUser, loginUser, resetPasswordRequest, resetPasswordProcess, registerOrLoginUser, updateUserPassword, sendConfirmEmailLink, confirmEmail, getUserById };
+async function createOnboarding(user_id) {
+  return db.insert({ user_id }).into('onboarding')
+}
+
+async function updateOnboarding(user_id, onboarding){
+  return db.update({
+    step: onboarding.step,
+    time_to_spend: onboarding.time_to_spend,
+    categories_ids: JSON.stringify(onboarding.categories_ids || [])
+  }).from('onboarding').where('user_id', user_id);
+}
+
+async function getOnboarding(user_id){
+  return db.select('*').from('onboarding').where('user_id', user_id).reduce(helpers.getFirst);
+}
+module.exports = { updateOnboarding, getOnboarding, registerUser, loginUser, resetPasswordRequest, resetPasswordProcess, registerOrLoginUser, updateUserPassword, sendConfirmEmailLink, confirmEmail, getUserById };
