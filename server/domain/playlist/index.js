@@ -47,15 +47,11 @@ function getPlaylists(query, headers) {
         .orWhere('description', 'ILIKE', `%${q}%`)
         .orWhere('hashtags', 'ILIKE', `%${q}%`);
         tx.where('playlist.id', 'in', sub);
+        let log = {keyword: title};
+        await db.insert(log).into('searchlog');
       }
       if (title) { // ILIKE search by title
         tx.andWhere('playlist.title', 'ILIKE', `%${title}%`);
-        let log = {keyword: title};
-        if (headers) {
-          log.identifier = headers.identifier;
-          log.email = headers.email;
-        }
-        await db.insert(log).into('searchlog');
       }
       if (hashtags) { // ILIKE search by hashtags
         tx.andWhere('playlist.hashtags', 'ILIKE', `%${hashtags}%`);
