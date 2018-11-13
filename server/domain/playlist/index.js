@@ -47,7 +47,7 @@ function getPlaylists(query, headers) {
         .orWhere('description', 'ILIKE', `%${q}%`)
         .orWhere('hashtags', 'ILIKE', `%${q}%`);
         tx.where('playlist.id', 'in', sub);
-        let log = {keyword: title};
+        let log = {keyword: q};
         await db.insert(log).into('searchlog');
       }
       if (title) { // ILIKE search by title
