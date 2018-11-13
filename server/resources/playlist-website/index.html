@@ -63,11 +63,11 @@
       $scope.search = {};
       $scope.filterResults = {};
       let user_id = $location.search().id || localStorage.getItem('uuid') || guid(); //'Viewly';
-
+      console.log(user_id, "Active");
 
       if ($location.search().vidflowadminsomethingxcv) {
         $scope.admin = true;
-        user_id = $location.search().id || 'Viewly';
+        user_id = $location.search().id;
       }
       localStorage.setItem('uuid', user_id);
 

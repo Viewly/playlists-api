@@ -4,7 +4,8 @@ const { validateErrors, matchData, generalValidators } = require('./index');
 const registerUser = [
   generalValidators.email,
   generalValidators.password,
-  check(['first_name', 'last_name', 'avatar_url']).trim().optional()
+  check(['first_name', 'last_name']).trim().optional(),
+  check('avatar_url').optional().trim().isURL().withMessage('Must be a valid url.')
 ];
 
 const loginUser = [

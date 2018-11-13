@@ -100,7 +100,7 @@ router.get('/bookmarks', (req, res) => {
 });
 
 router.post('/bookmark', userValidators.createBookmark, (req, res) => {
-  const uuid = req.user.id || 'Viewly';
+  const uuid = req.user.id;
   bookmarks.createBookmark(uuid, req.body.playlist_id).then(data => {
     res.json(data);
   }).catch(err => res.json(err));
