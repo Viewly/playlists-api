@@ -822,7 +822,7 @@
           </thead>
           <tbody>
           <tr ng-repeat="suggestion in suggestions | filter:{type: suggestionsFilterType}">
-            <td>{{suggestion.title}} <span title="{{suggestion.description}}"><b>Desc</b></span></td>
+            <td>{{suggestion.title}} <span><b>{{suggestion.description}}</b></span></td>
             <td>{{suggestion.email}}</td>
             <td>{{categoriesMap[suggestion.category]}}</td>
             <td><a href="{{suggestion.url}}" target="_blank">Link</a></td>
