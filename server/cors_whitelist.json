@@ -1,5 +1,6 @@
 [
   "https://vidflow.io",
   "https://www.vidflow.io",
-  "http://localhost:3000"
+  "http://localhost:3000",
+  "https://staging.vidflow.io"
 ]
