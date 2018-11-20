@@ -92,9 +92,9 @@ router.post('/bookmark', (req, res) => {
   }).catch(err => res.json(err));
 });
 
-router.delete('/bookmark/:bookmark_id', (req, res) => {
+router.delete('/bookmark/:playlist_id', (req, res) => {
   const uuid = req.user.id || 'Viewly';
-  bookmarks.deleteBookmark(uuid, req.params.bookmark_id).then(data => {
+  bookmarks.deleteBookmark(uuid, req.params.playlist_id).then(data => {
     res.json({success: true});
   }).catch(err => res.json(err));
 });

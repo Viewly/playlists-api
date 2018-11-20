@@ -9,8 +9,8 @@ async function createBookmark(user_id, playlist_id){
 
 }
 
-function deleteBookmark(user_id, bookmark_id){
-  return db.del().from('bookmark').where({id: bookmark_id, user_id});
+function deleteBookmark(user_id, playlist_id){
+  return db.del().from('bookmark').where({playlist_id, user_id});
 }
 
 function getBookmarksForUser(user_id){
