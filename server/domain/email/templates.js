@@ -53,7 +53,7 @@ function prepareEmail(template, subject, to, vars) {
       template
     ],
     metadata: {
-      website: 'https://vidflow.io'
+      website: 'https://vidflow.com'
     },
     send_at: new Date(),
   };
