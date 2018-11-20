@@ -5,9 +5,9 @@ const utils = require('../../utils/helpers');
 const uuid = require('uuid');
 const moment = require('moment');
 
-function getPlaylists(query, headers) {
-  let { limit, page, title, hashtags, slug, order, q  }  = query;
-  utils.deleteProps(query, ['page', 'limit', 'title', 'hashtags', 'slug', 'order', 'q']);
+function getPlaylists(query, user_id) {
+  let { limit, page, title, hashtags, slug, order, q, bookmarked  }  = query;
+  utils.deleteProps(query, ['page', 'limit', 'title', 'hashtags', 'slug', 'order', 'q', 'bookmarked']);
 
   const fields = [
     'playlist.id as playlist_id',
@@ -30,6 +30,11 @@ function getPlaylists(query, headers) {
     'category.name as category_name',
     'category.slug as category_slug'
   ];
+
+  if (bookmarked && user_id) {
+    fields.push('bookmark.id as bookmark_id')
+  }
+
   return db.select(db.raw(fields.join(','))).from('playlist')
   .leftJoin('video', 'video.playlist_id', 'playlist.id')
   .leftJoin('source_video', 'video.source_video_id', 'source_video.id')
@@ -59,6 +64,9 @@ function getPlaylists(query, headers) {
       if (slug) { // Exact search by slug (category shortname)
         tx.andWhere('category.slug', '=', slug);
       }
+      if (bookmarked && user_id) {
+        tx.rightJoin('bookmark', 'playlist.id', 'bookmark.playlist_id')
+      }
 
   })
     .then(data => {
@@ -84,7 +92,8 @@ function getPlaylists(query, headers) {
             hashtags: i.hashtags,
             user_id: i.user_id,
             noVideos: 0,
-            publish_date: i.publish_date
+            publish_date: i.publish_date,
+            bookmark_id: i.bookmark_id
           }
         }
         if (i.id) {
