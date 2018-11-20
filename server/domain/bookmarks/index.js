@@ -14,7 +14,7 @@ function deleteBookmark(user_id, bookmark_id){
 }
 
 function getBookmarksForUser(user_id){
-  return db.select('id', 'playlist_id', 'created_at').from('bookmark').where('user_id', user_id);
+  return db.count().from('bookmark').where('bookmark.user_id', user_id).reduce(helpers.getFirst);
 }
 
 module.exports = { createBookmark, deleteBookmark, getBookmarksForUser };

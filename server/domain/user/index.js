@@ -174,7 +174,7 @@ async function updateOnboarding(user_id, onboarding){
   const categories = await youtube.getCategories();
   user.categories_ids = onboarding.categories_ids || [];
   user.categories = user.categories_ids.map(i => {
-    let found = categories.find(x => x.id === i.id);
+    let found = categories.find(x => x.id === i);
     return found.name;
   });
   return db.update({
