@@ -95,7 +95,7 @@ function getPlaylists(query, user_id) {
             user_id: i.user_id,
             noVideos: 0,
             publish_date: i.publish_date,
-            bookmark_id: i.bookmark_id
+            bookmarked: !!i.bookmark_id
           }
         }
         if (i.id) {
