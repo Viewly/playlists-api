@@ -66,6 +66,14 @@ const auth = (req, res, next) => {
   });
 };
 
+const authOptional = (req, res, next) => {
+  req.headers['authorization'] ?
+  jwt.verify(req.headers['authorization'], process.env.JWT_PASSWORD, (err, decoded) => {
+      req.user = !err ? decoded : null;
+      next();
+  }) : next();
+};
+
 function deleteProps(obj, props) {
   props.forEach((prop) => {
     delete obj[prop]
@@ -82,5 +90,6 @@ module.exports = {
   durationToReadable,
   auth,
   validateUuid,
-  deleteProps
+  deleteProps,
+  authOptional
 };
