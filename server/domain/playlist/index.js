@@ -31,7 +31,7 @@ function getPlaylists(query, user_id) {
     'category.slug as category_slug'
   ];
 
-  if (bookmarked && user_id) {
+  if (user_id) {
     fields.push('bookmark.id as bookmark_id')
   }
 

@@ -8,7 +8,7 @@ const reviews = require('../domain/reviews/index');
 const hashtags = require('../domain/hashtags/index');
 const utils = require('../utils/helpers');
 
-router.get('/playlists', (req, res) => {
+router.get('/playlists', utils.authOptional, (req, res) => {
   const uuid = req.user ? req.user.id : null;
   req.query.page = parseInt(req.query.page || 0);
   req.query.limit = parseInt(req.query.limit || 50);
