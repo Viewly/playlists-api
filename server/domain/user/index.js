@@ -4,6 +4,7 @@ const moment = require('moment');
 const jwt = require('jsonwebtoken');
 const youtube = require('../youtube/index');
 const emails = require('../email/index');
+const crm = require('../crm/index');
 
 async function registerOrLoginUser(code){ //For Youtube
   const googleUser = await youtube.getUserInfoByCode(code);
@@ -52,7 +53,7 @@ async function registerUser(user){
           email_confirmed: !!user.g_access_token
         }).into('user');
         await createOnboarding(user.id);
-        Promise.all([emails.sendWelcomeEmail(user), sendConfirmEmailLink(user.email)]);
+        Promise.all([emails.sendWelcomeEmail(user), sendConfirmEmailLink(user.email), crm.createUser(user)]);
         return { success: true, user: getCleanUserAndJwt(user), registered: true };
     }
 }
@@ -169,11 +170,18 @@ async function createOnboarding(user_id) {
 }
 
 async function updateOnboarding(user_id, onboarding){
+  const user = await getUserById(user_id);
+  const categories = await youtube.getCategories();
+  user.categories_ids = onboarding.categories_ids || [];
+  user.categories = user.categories_ids.map(i => {
+    let found = categories.find(x => x.id === i.id);
+    return found.name;
+  });
   return db.update({
     step: onboarding.step,
     time_to_spend: onboarding.time_to_spend,
-    categories_ids: JSON.stringify(onboarding.categories_ids || [])
-  }).from('onboarding').where('user_id', user_id);
+    categories_ids: JSON.stringify(user.categories_ids)
+  }).from('onboarding').where('user_id', user_id).then(() => crm.updateUser(user));
 }
 
 async function getOnboarding(user_id){
