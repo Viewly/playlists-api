@@ -64,8 +64,10 @@ function getPlaylists(query, user_id) {
       if (slug) { // Exact search by slug (category shortname)
         tx.andWhere('category.slug', '=', slug);
       }
-      if (bookmarked && user_id) {
-        tx.rightJoin('bookmark', 'playlist.id', 'bookmark.playlist_id')
+      if (user_id) {
+        bookmarked
+          ? tx.rightJoin('bookmark', 'playlist.id', 'bookmark.playlist_id')
+          : tx.leftJoin('bookmark', 'playlist.id', 'bookmark.playlist_id')
       }
 
   })
