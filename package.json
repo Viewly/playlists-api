@@ -41,6 +41,7 @@
     "raven": "^2.6.3",
     "request": "latest",
     "serve-favicon": "^2.4.5",
+    "simple-oauth2": "^2.2.1",
     "uuid": "^3.2.1",
     "uuid-validate": "0.0.3",
     "youtube-api": "^2.0.9"
