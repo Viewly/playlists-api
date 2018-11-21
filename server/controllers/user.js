@@ -3,6 +3,11 @@ const users = require('../domain/user/index');
 const helpers = require('../utils/helpers');
 const bookmarks = require('../domain/bookmarks/index');
 const youtube = require('../domain/youtube/index');
+const reddit = require('../domain/reddit/index');
+const authAdapters = {
+  google: youtube,
+  reddit
+};
 const jwt = require('jsonwebtoken');
 
 
@@ -19,9 +24,13 @@ router.post('/login', (req, res) => {
 });
 
 router.get('/auth', (req, res) => {
-  youtube.getAuthUrl().then(url => {
-    res.json({url})
-  }).catch(err => res.json(err))
+  const adapter = authAdapters[req.query.adapter || 'google'];
+  if (!adapter) res.json({success: false, error: "Adapter does not exist"});
+  else {
+    adapter.getAuthUrl().then(url => {
+      res.json({url})
+    }).catch(err => res.json(err))
+  }
 });
 
 router.post('/reset-password-request', (req, res) => {

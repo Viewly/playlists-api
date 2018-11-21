@@ -25,7 +25,7 @@ const is_live = wwwUtils.shouldRun();
 is_live && app.use(Raven.requestHandler());
 //CORS
 const whitelist = require('./cors_whitelist.json');
-
+const a = require('./domain/reddit/index');
 let corsOptions = {
   origin: whitelist
 };
