@@ -94,9 +94,11 @@ function getPlaylists(query, user_id) {
             hashtags: i.hashtags,
             user_id: i.user_id,
             noVideos: 0,
-            publish_date: i.publish_date,
-            bookmarked: !!i.bookmark_id
+            publish_date: i.publish_date
           }
+        }
+        if (user_id) {
+          playlistMap[id].bookmarked = !!i.bookmark_id
         }
         if (i.id) {
           playlistMap[id].duration.add(moment.duration(i.duration));
