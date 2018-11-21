@@ -3,11 +3,14 @@ const users = require('../domain/user/index');
 const helpers = require('../utils/helpers');
 const bookmarks = require('../domain/bookmarks/index');
 const youtube = require('../domain/youtube/index');
-const reddit = require('../domain/reddit/index');
+const reddit = require('../domain/login-adapters/reddit/index');
 const passport = require('passport');
+
 const authAdapters = {
   google: youtube,
-  reddit
+  reddit,
+  facebook: passport.authenticate('facebook')//pp.get('/auth/facebook', );
+
 };
 const jwt = require('jsonwebtoken');
 
@@ -24,26 +27,29 @@ router.post('/login', (req, res) => {
   }).catch(err => res.json(err))
 });
 
-router.get('/auths', (req, res, next) => {
-  passport.authenticate('reddit', function(err, user, info) {
-    if (err) { return next(err); }
-    if (!user) { return res.redirect('/login'); }
-    req.logIn(user, function(err) {
-      if (err) { return next(err); }
-      return res.redirect('/users/' + user.username);
-    });
-  })(req, res, next);
-});
-
-router.get('/auth', (req, res) => {
-  const adapter = authAdapters[req.query.adapter || 'google'];
-  if (!adapter) res.json({success: false, error: "Adapter does not exist"});
-  else {
-    adapter.getAuthUrl().then(url => {
-      res.json({url})
-    }).catch(err => res.json(err))
-  }
-});
+router.get('/auth', (req, res, next) => passport.authenticate(req.query.platform || 'google', { session: false, scope: 'email' })(req, res, next));
+router.get('/auth/facebook', (req, res, next) => passport.authenticate('facebook', (err, user, info) => {
+  console.log(err, user, info);
+  res.json(user);
+  //res.redirect('/crap?token=123')
+})(req, res, next));
+// router.get('/auth', (req, res) => {
+//   passport.authenticate(req.query.adapter || 'google', function(err, user, info) {
+//     if (err) { return next(err); }
+//     if (!user) { return res.redirect('/login'); }
+//     req.logIn(user, function(err) {
+//       if (err) { return next(err); }
+//       return res.redirect('/users/' + user.username);
+//     });
+//   })(req, res, next);
+  // const adapter = authAdapters[req.query.adapter || 'google'];
+  // if (!adapter) res.json({success: false, error: "Adapter does not exist"});
+  // else {
+  //   adapter.getAuthUrl().then(url => {
+  //     res.json({url})
+  //   }).catch(err => res.json(err))
+  // }
+//});
 
 router.post('/reset-password-request', (req, res) => {
   const email = req.body.email;
@@ -65,10 +71,18 @@ router.post('/reset-password', (req, res) => {
 });
 
 router.post('/youtube-login', async (req, res) => {
-  users.registerOrLoginUser(req.body.code).then(data => {
+  users.registerOrLoginUserGoogle(req.body.code).then(data => {
     data.token = jwt.sign(data.user, process.env.JWT_PASSWORD);
     res.json(data);
   }).catch(err => res.json(err.message))
+});
+
+router.post('/facebook-login', (req, res) => {
+
+});
+
+router.get('/reddit-login', (req, res, next) => {
+
 });
 
 router.post('/confirm-email-request', (req, res) => {

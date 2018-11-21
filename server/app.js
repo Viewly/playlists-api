@@ -9,11 +9,15 @@ const express = require('express'),
   Raven = require('raven'),
   helpers = require('./utils/helpers'),
   passportStrategies = require('./domain/passport/index'),
-  session = require('express-session');
+  session = require('express-session'),
+  passport = require('passport');
 
 require('dotenv').config();
 passportStrategies.initializeStrategies();
-app.use(session({ secret: 'SECRET' })); // session secret
+//app.use(session({ secret: 'SECRET' })); // session secret
+app.use(passport.initialize());
+//app.use(passport.session());
+
 
 const wwwUtils = require('./utils/www.js');
 const mainController = require('./controllers/main');
@@ -29,7 +33,7 @@ const is_live = wwwUtils.shouldRun();
 is_live && app.use(Raven.requestHandler());
 //CORS
 const whitelist = require('./cors_whitelist.json');
-const a = require('./domain/reddit/index');
+const a = require('./domain/login-adapters/reddit/index');
 let corsOptions = {
   origin: whitelist
 };

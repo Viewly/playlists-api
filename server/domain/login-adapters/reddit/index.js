@@ -1,5 +1,26 @@
-const utils = require('../../utils/helpers');
+const utils = require('../../../utils/helpers');
+const users = require('../../user/index');
 const request = require('request');
+const RedditStrategy = require('passport-reddit').Strategy;
+const passport = require('passport');
+
+function initializePassportStrategy() {
+  passport.use(new RedditStrategy({
+      clientID: process.env.REDDIT_APP_ID,
+      clientSecret: process.env.REDDIT_APP_SECRET,
+      callbackURL: "https://vidflow.com/authy",
+      state: utils.generateUuid()
+    },
+    function(accessToken, refreshToken, profile, done) {
+      console.log(profile, ":P")
+      // User.findOrCreate({ redditId: profile.id }, function (err, user) {
+      //   return done(err, user);
+      // });
+    }
+  ))
+}
+
+
 const oauth2 = require('simple-oauth2').create({
   client: {
     id: process.env.REDDIT_APP_ID,
@@ -51,7 +72,7 @@ async function getUserInfoByCode(code, state){
             over_18: body.over_18,
             is_gold: body.is_gold,
             is_mod: body.is_mod,
-            has_verified_email: body.has_verified_email,
+            email_confirmed: body.has_verified_email,
             pref_nightmode: body.pref_nightmode,
             comment_karma: body.comment_karma,
             created_utc: body.created_utc
@@ -67,4 +88,20 @@ async function getUserInfoByCode(code, state){
   }
 }
 
-module.exports = { getAuthUrl, getUserInfoByCode };
+async function registerOrLoginUserReddit(code){ //Maybe link reddit
+  const user = await getUserInfoByCode(code);
+
+  let data = await users.registerUser({
+    reddit_username: user.username,
+    avatar_url: user.picture,
+    email_confirmed: user.email_confirmed
+
+  });
+  data.user = getCleanUserAndJwt(data.user);
+  return data;
+
+}
+
+
+
+module.exports = { initializePassportStrategy, getAuthUrl, getUserInfoByCode };

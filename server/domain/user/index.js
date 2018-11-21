@@ -6,7 +6,7 @@ const youtube = require('../youtube/index');
 const emails = require('../email/index');
 const crm = require('../crm/index');
 
-async function registerOrLoginUser(code){ //For Youtube
+async function registerOrLoginUserGoogle(code){ //For Google
   const googleUser = await youtube.getUserInfoByCode(code);
 
   let data = await registerUser({
@@ -22,39 +22,56 @@ async function registerOrLoginUser(code){ //For Youtube
 
 }
 
-async function registerUser(user){
+async function registerUser(user, platform = 'google'){
     const existing = await db.select('*').from('user').where('email', user.email).reduce(helpers.getFirst);
     if (existing) {
       user.id = existing.id;
-      if (existing.g_access_token && user.g_access_token) {
-        return { success: true, user };
+      if ((existing.g_access_token && user.g_access_token) || user.facebook_id) {
+        return { success: true, user: getCleanUserAndJwt(user) };
 
       } else if (!existing.g_access_token && user.g_access_token) {
         await updateUserDetails(user);
-        return { success: true, user, message: "Thanks for linking your account with your Youtube account." };
+        return { success: true, user: getCleanUserAndJwt(user), message: "Thanks for linking your account with your Youtube account." };
 
       } else {
         return { success: false, reason: "User already exists." };
       }
     }
     else {
-        user.id = helpers.generateUuid();
-        const password_hash = user.password ? await helpers.createBcryptHash(user.password): '';
+        //user.id = helpers.generateUuid();
 
-        await db.insert({
-          id: user.id,
-          password_hash,
-          email: user.email,
-          first_name: user.first_name,
-          last_name: user.last_name,
-          avatar_url: user.avatar_url,
-          g_access_token: user.g_access_token,
-          g_refresh_token: user.g_refresh_token,
-          email_confirmed: !!user.g_access_token
-        }).into('user');
-        await createOnboarding(user.id);
-        Promise.all([emails.sendWelcomeEmail(user), sendConfirmEmailLink(user.email), crm.createUser(user)]);
-        return { success: true, user: getCleanUserAndJwt(user), registered: true };
+        let newUser = {};
+        switch (platform) {
+          case 'google':
+            break;
+          case 'facebook':
+            newUser = {
+              email: user.email,
+              email_confirmed: true,
+              first_name: user.name,
+              facebook_id: user.id
+            };
+            break;
+          case 'local':
+            const password_hash = user.password ? await helpers.createBcryptHash(user.password): '';
+            newUser = {
+              email: user.email,
+              first_name: user.first_name,
+              last_name: user.last_name,
+              password_hash
+            };
+            break;
+          case 'twitter':
+            newUser = {}; //TBD
+            break;
+            //sendConfirmEmailLink(user.email)
+        }
+
+        newUser.id = helpers.generateUuid();
+        await db.insert(newUser).into('user');
+        await createOnboarding(newUser.id);
+        Promise.all([emails.sendWelcomeEmail(newUser), crm.createUser(newUser)]);
+        return { success: true, user: getCleanUserAndJwt(newUser), registered: true };
     }
 }
 
@@ -212,4 +229,4 @@ async function updateOnboarding(user_id, onboarding){
 async function getOnboarding(user_id){
   return db.select('*').from('onboarding').where('user_id', user_id).reduce(helpers.getFirst);
 }
-module.exports = { updateOnboarding, getOnboarding, registerUser, loginUser, resetPasswordRequest, resetPasswordProcess, registerOrLoginUser, updateUserPassword, sendConfirmEmailLink, confirmEmail, getUserById, updateUserBasicInfo, changeUserPassword };
+module.exports = { updateOnboarding, getOnboarding, registerUser, loginUser, resetPasswordRequest, resetPasswordProcess, registerOrLoginUserGoogle, updateUserPassword, sendConfirmEmailLink, confirmEmail, getUserById, updateUserBasicInfo, changeUserPassword };
