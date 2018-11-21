@@ -45,6 +45,7 @@ router.delete('/playlist/:playlist_id', utils.auth, (req, res) => {
     res.json({success: true});
   }).catch(err => res.json(err))
 });
+
 router.post('/playlist-reorder/:playlist_id', utils.auth, async (req, res) => {
   const uuid = req.user.id;
   playlist.reorderPlaylist(uuid, req.params.playlist_id, req.body).then(() => {
