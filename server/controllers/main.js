@@ -17,9 +17,10 @@ router.get('/playlists', utils.authOptional, (req, res) => {
   }).catch(err => res.json(err))
 });
 
-router.get('/playlist/:playlist_id', async (req, res) => {
+router.get('/playlist/:playlist_id', utils.authOptional, async (req, res) => {
+  const uuid = req.user ? req.user.id : null;
   const playlist_id = await playlist.playlistUuidConvert(req.params.playlist_id);
-  playlist.getPlaylist(playlist_id).then(playlist => {
+  playlist.getPlaylist(playlist_id, uuid).then(playlist => {
     res.json(playlist);
   }).catch(err => res.json(err))
 });

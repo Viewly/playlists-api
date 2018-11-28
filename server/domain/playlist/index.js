@@ -115,29 +115,41 @@ function getPlaylists(query, user_id) {
   });
 }
 
-function getPlaylist(playlist_id) {
+function getPlaylist(playlist_id, user_id) {
   const fields = [
     'playlist.*',
     'category.id as category_id',
     'category.name as category_name',
     'category.slug as category_slug'
   ];
+  if (user_id) {
+    fields.push('bookmark.id as bookmark_id')
+  }
 
   return Promise.all([
     db.select(db.raw(fields.join(','))).from('playlist')
     .leftJoin('category', 'category.id', 'playlist.category_id')
+    .modify((q) => {
+      if (user_id) {
+        q.leftJoin('bookmark', 'bookmark.playlist_id', 'playlist.id');
+      }
+    })
     .where('playlist.id', playlist_id).reduce(i => i[0]),
     video.getVideosForPlaylist(playlist_id),
     ]).then(data => {
       const playlist = data[0];
-    playlist.category =  {
-      id: playlist.category_id,
-      name: playlist.category_name,
-      slug: playlist.category_slug
-    };
-    utils.deleteProps(playlist, ['category_id', 'category_name', 'category_slug']);
-    playlist.videos = data[1];
-    return Promise.resolve(data[0]);
+      if (user_id) {
+        playlist.bookmarked = !!playlist.bookmark_id;
+        delete playlist.bookmark_id;
+      }
+      playlist.category =  {
+        id: playlist.category_id,
+        name: playlist.category_name,
+        slug: playlist.category_slug
+      };
+      utils.deleteProps(playlist, ['category_id', 'category_name', 'category_slug']);
+      playlist.videos = data[1];
+      return Promise.resolve(data[0]);
   });
 }
 
