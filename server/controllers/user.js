@@ -4,6 +4,7 @@ const helpers = require('../utils/helpers');
 const bookmarks = require('../domain/bookmarks/index');
 const youtube = require('../domain/youtube/index');
 const reddit = require('../domain/reddit/index');
+const passport = require('passport');
 const authAdapters = {
   google: youtube,
   reddit
@@ -21,6 +22,17 @@ router.post('/login', (req, res) => {
   users.loginUser(req.body.email, req.body.password).then(data => {
     res.json(data);
   }).catch(err => res.json(err))
+});
+
+router.get('/auths', (req, res, next) => {
+  passport.authenticate('reddit', function(err, user, info) {
+    if (err) { return next(err); }
+    if (!user) { return res.redirect('/login'); }
+    req.logIn(user, function(err) {
+      if (err) { return next(err); }
+      return res.redirect('/users/' + user.username);
+    });
+  })(req, res, next);
 });
 
 router.get('/auth', (req, res) => {
