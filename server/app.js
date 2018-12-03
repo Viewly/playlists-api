@@ -7,9 +7,13 @@ const express = require('express'),
   path = require('path'),
   http = require('http'),
   Raven = require('raven'),
-  helpers = require('./utils/helpers');
+  helpers = require('./utils/helpers'),
+  passportStrategies = require('./domain/passport/index'),
+  session = require('express-session');
 
 require('dotenv').config();
+passportStrategies.initializeStrategies();
+app.use(session({ secret: 'SECRET' })); // session secret
 
 const wwwUtils = require('./utils/www.js');
 const mainController = require('./controllers/main');
