@@ -135,10 +135,35 @@ function updateUserDetails(user) {
   }).where('id', user.id)
 }
 
+function updateUserBasicInfo(user) {
+  return db.from('user').update({
+    first_name: user.first_name,
+    last_name: user.last_name,
+    avatar_url: user.avatar_url
+  }).where('id', user.id)
+}
+
 function updateUserPassword(user_id, hash){
   return db.from('user').update({
     password_hash: hash,
   }).where('id', user_id)
+}
+
+async function validateUserPassword(user_id, password) {
+  const user = await db.from('user').select('password_hash').where('id', user_id).reduce(helpers.getFirst);
+  return helpers.compareBcryptHash(password, user.password_hash);
+}
+
+async function changeUserPassword(user_id, old_password, new_password) {
+  const valid = await validateUserPassword(user_id, old_password);
+  if (valid) {
+    //TODO: some more validation for the new password.
+    const new_hash = await helpers.createBcryptHash(new_password);
+    await updateUserPassword(user_id, new_hash);
+    return { success: true, message: 'Password changed successfully!' }
+  }  else {
+    return { success: false, message: 'Current password is wrong.' }
+  }
 }
 
 function getCleanUserAndJwt(user) {
@@ -187,4 +212,4 @@ async function updateOnboarding(user_id, onboarding){
 async function getOnboarding(user_id){
   return db.select('*').from('onboarding').where('user_id', user_id).reduce(helpers.getFirst);
 }
-module.exports = { updateOnboarding, getOnboarding, registerUser, loginUser, resetPasswordRequest, resetPasswordProcess, registerOrLoginUser, updateUserPassword, sendConfirmEmailLink, confirmEmail, getUserById };
+module.exports = { updateOnboarding, getOnboarding, registerUser, loginUser, resetPasswordRequest, resetPasswordProcess, registerOrLoginUser, updateUserPassword, sendConfirmEmailLink, confirmEmail, getUserById, updateUserBasicInfo, changeUserPassword };

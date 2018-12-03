@@ -78,6 +78,28 @@ router.get('/info', (req, res) => {
   }
 });
 
+router.put('/info', (req, res) => {
+  const user = req.body;
+  user.id = req.user.id;
+  if (user.id) {
+    users.updateUserBasicInfo(user).then(() => {
+      res.json({success: true});
+    }).catch(err => res.json(err))
+  } else {
+    res.json({success: false, reason: "JWT might not be valid."})
+  }
+});
+
+router.put('/change-password', (req, res) => {
+  const uuid = req.user.id;
+  const { current_password, new_password } = req.body;
+  uuid
+    ? users.changeUserPassword(uuid, current_password, new_password).then(data => {
+      res.json(data);
+    }).catch(err => res.json(err))
+    : res.json({success: false, reason: "JWT might not be valid."})
+});
+
 router.get('/bookmarks', (req, res) => {
   const uuid = req.user.id || 'Viewly';
   bookmarks.getBookmarksForUser(uuid).then(data => {
