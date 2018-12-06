@@ -303,7 +303,7 @@
           key,
           type: data.type,
         }).then((res) => {
-          const url = res.data;
+          const url = res.data.url;
           if (url) {
             upload(url, data, documentName).then(() => {
               $scope[`${documentName}_upload`] = $sce.trustAsHtml('<p class="c-form-message c-form-message--success">Uploaded successfully!</p>');
