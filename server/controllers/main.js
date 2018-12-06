@@ -105,7 +105,7 @@ router.put('/video', (req, res) => {
 //Route used to get signed s3 url
 router.post('/upload-file', (req, res) => {
   thumbnails.getSignedUrl(req.body).then(data => {
-    res.json(data)
+    res.json({url: data})
   }).catch(err => res.json(err))
 });
 
