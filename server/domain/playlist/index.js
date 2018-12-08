@@ -41,7 +41,16 @@ function getPlaylists(query, user_id) {
   .leftJoin('category', 'playlist.category_id', 'category.id')
   .orderBy(`playlist.${order || 'created_at'}`, 'desc')
   .modify(async (tx) => {
-
+    if (user_id) { //Bookmarks
+      tx.leftJoin('bookmark', function() {
+        this.on('bookmark.playlist_id', '=', 'playlist.id').onIn('bookmark.user_id', [ user_id ])
+      });
+      if (bookmarked) {
+        tx.andWhere('bookmark.user_id', '=', user_id);
+      }
+    }
+  })
+  .modify(async (tx) => {
       if (Object.keys(query).length > 0) { //General search by attributes
         let search = {};
         Object.keys(query).forEach(key => { search['playlist.' + key] = query[key]});
@@ -51,7 +60,7 @@ function getPlaylists(query, user_id) {
         let sub = db.from("playlist").select('id').where('title', 'ILIKE', `%${q}%`)
         .orWhere('description', 'ILIKE', `%${q}%`)
         .orWhere('hashtags', 'ILIKE', `%${q}%`);
-        tx.where('playlist.id', 'in', sub);
+        tx.andWhere('playlist.id', 'in', sub);
         let log = {keyword: q};
         await db.insert(log).into('searchlog');
       }
@@ -64,12 +73,6 @@ function getPlaylists(query, user_id) {
       if (slug) { // Exact search by slug (category shortname)
         tx.andWhere('category.slug', '=', slug);
       }
-      if (user_id) {
-        bookmarked
-          ? tx.rightJoin('bookmark', 'playlist.id', 'bookmark.playlist_id')
-          : tx.leftJoin('bookmark', 'playlist.id', 'bookmark.playlist_id')
-      }
-
   })
     .then(data => {
       const playlistMap = {};

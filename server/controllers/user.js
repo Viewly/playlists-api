@@ -101,21 +101,21 @@ router.put('/change-password', (req, res) => {
 });
 
 router.get('/bookmarks', (req, res) => {
-  const uuid = req.user.id || 'Viewly';
+  const uuid = req.user.id;
   bookmarks.getBookmarksForUser(uuid).then(data => {
     res.json(data);
   }).catch(err => res.json(err));
 });
 
 router.post('/bookmark', (req, res) => {
-  const uuid = req.user.id || 'Viewly';
+  const uuid = req.user.id;
   bookmarks.createBookmark(uuid, req.body.playlist_id).then(data => {
     res.json(data);
   }).catch(err => res.json(err));
 });
 
 router.delete('/bookmark/:playlist_id', (req, res) => {
-  const uuid = req.user.id || 'Viewly';
+  const uuid = req.user.id;
   bookmarks.deleteBookmark(uuid, req.params.playlist_id).then(data => {
     res.json({success: true});
   }).catch(err => res.json(err));
