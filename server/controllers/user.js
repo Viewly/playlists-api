@@ -68,7 +68,7 @@ router.post('/confirm-email', (req, res) => {
 router.use(helpers.auth);
 
 router.get('/info', (req, res) => {
-  const uuid = req.user.id || 'Viewly';
+  const uuid = req.user.id;
   if (uuid) {
     users.getUserById(req.user.id).then(user => {
       res.json(user);
@@ -82,8 +82,8 @@ router.put('/info', (req, res) => {
   const user = req.body;
   user.id = req.user.id;
   if (user.id) {
-    users.updateUserBasicInfo(user).then(() => {
-      res.json({success: true});
+    users.updateUserBasicInfo(user).then(async () => {
+      res.json({success: true, user: await users.getUserById(req.user.id)});
     }).catch(err => res.json(err))
   } else {
     res.json({success: false, reason: "JWT might not be valid."})
