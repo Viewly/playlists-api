@@ -174,7 +174,7 @@ function getCleanUserAndJwt(user) {
     last_name: user.last_name,
     created_at: user.created_at,
     avatar_url: user.avatar_url,
-    email_confirmed: user.email_confirmed
+    email_confirmed: user.email_confirmed || !!user.g_access_token
   };
   data.jwt = jwt.sign(data, process.env.JWT_PASSWORD);
   return data;
