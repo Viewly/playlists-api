@@ -28,7 +28,7 @@ router.get('/playlist/:playlist_id', utils.authOptional, async (req, res) => {
 router.post('/playlist', async (req, res) => {
   const uuid = req.user_id || req.headers.user_id || 'Viewly';
   playlist.createPlaylist(uuid, req.body).then(id => {
-    res.json({id});
+    res.json(playlist.getPlaylist(id));
   }).catch(err => res.json(err))
 });
 
