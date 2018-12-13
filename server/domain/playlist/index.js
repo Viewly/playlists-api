@@ -28,7 +28,11 @@ function getPlaylists(query, user_id) {
     'source_video.duration',
     'category.id as category_id',
     'category.name as category_name',
-    'category.slug as category_slug'
+    'category.slug as category_slug',
+    'email',
+    'first_name',
+    'last_name',
+    'alias'
   ];
 
   if (user_id) {
@@ -39,6 +43,7 @@ function getPlaylists(query, user_id) {
   .leftJoin('video', 'video.playlist_id', 'playlist.id')
   .leftJoin('source_video', 'video.source_video_id', 'source_video.id')
   .leftJoin('category', 'playlist.category_id', 'category.id')
+  .leftJoin('user', 'playlist.user_id', 'user.id')
   .orderBy(`playlist.${order || 'created_at'}`, 'desc')
   .modify(async (tx) => {
     if (user_id) { //Bookmarks
@@ -94,11 +99,17 @@ function getPlaylists(query, user_id) {
               name: i.category_name,
               slug: i.category_slug
             },
+            user: {
+              id: i.user_id,
+              email: i.email,
+              first_name: i.first_name,
+              last_name: i.last_name,
+              alias: i.alias
+            },
             duration: moment.duration(),
             created_at: i.created_at,
             status: i.status,
             hashtags: i.hashtags,
-            user_id: i.user_id,
             noVideos: 0,
             publish_date: i.publish_date
           }
@@ -126,7 +137,11 @@ function getPlaylist(playlist_id, user_id) {
     'playlist.*',
     'category.id as category_id',
     'category.name as category_name',
-    'category.slug as category_slug'
+    'category.slug as category_slug',
+    'email',
+    'first_name',
+    'last_name',
+    'alias'
   ];
   if (user_id) {
     fields.push('bookmark.id as bookmark_id')
@@ -135,6 +150,7 @@ function getPlaylist(playlist_id, user_id) {
   return Promise.all([
     db.select(db.raw(fields.join(','))).from('playlist')
     .leftJoin('category', 'category.id', 'playlist.category_id')
+    .leftJoin('user', 'playlist.user_id', 'user.id')
     .modify((q) => {
       if (user_id) {
         q.leftJoin('bookmark', 'bookmark.playlist_id', 'playlist.id');
@@ -153,7 +169,14 @@ function getPlaylist(playlist_id, user_id) {
         name: playlist.category_name,
         slug: playlist.category_slug
       };
-      utils.deleteProps(playlist, ['category_id', 'category_name', 'category_slug']);
+      playlist.user = {
+        id: playlist.user_id,
+        email: playlist.email,
+        first_name: playlist.first_name,
+        last_name: playlist.last_name,
+        alias: playlist.alias
+      };
+      utils.deleteProps(playlist, ['category_id', 'category_name', 'category_slug', 'email', 'first_name', 'last_name', 'alias', 'user_id']);
       playlist.videos = data[1];
       return Promise.resolve(data[0]);
   });
