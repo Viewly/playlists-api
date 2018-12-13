@@ -29,11 +29,7 @@ async function addVideoToPlaylist(user_id, video) {
     from('source_video').
     where('youtube_video_id', video.video_id))[0];
 
-  const isOwner = (await db.select('*').
-    from('playlist').
-    where('id', video.playlist_id).
-    reduce(i => i[0])).user_id === user_id;
-  if (source && isOwner) {
+  if (source) {
     const exists = await db.select('*').
       from('video').
       where({ source_video_id: source.id, playlist_id: video.playlist_id }).
@@ -60,14 +56,7 @@ async function addVideoToPlaylist(user_id, video) {
     }
 
   } else {
-    if (!isOwner) {
-      return {
-        success: false,
-        reason: 'Attempted to add a Video to a playlist that is not owned by this user.',
-      };
-    } else {
-      throw new Error('Attempted to add a Video that is not in Source Video');
-    }
+    throw new Error('Attempted to add a Video that is not in Source Video');
   }
 }
 

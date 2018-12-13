@@ -39,20 +39,20 @@ router.put('/playlist', utils.auth, (req, res) => {
   }).catch(err => res.json(err))
 });
 
-router.delete('/playlist/:playlist_id', (req, res) => {
-  const uuid = req.user_id || req.headers.user_id || 'Viewly';
+router.delete('/playlist/:playlist_id', utils.auth, (req, res) => {
+  const uuid = req.user.id;
   playlist.deletePlaylist(uuid, req.params.playlist_id).then(() => {
     res.json({success: true});
   }).catch(err => res.json(err))
 });
-router.post('/playlist-reorder/:playlist_id', async (req, res) => {
-  const uuid = req.user_id || req.headers.user_id || 'Viewly';
+router.post('/playlist-reorder/:playlist_id', utils.auth, async (req, res) => {
+  const uuid = req.user.id;
   playlist.reorderPlaylist(uuid, req.params.playlist_id, req.body).then(() => {
     res.json({success: true});
   }).catch(err => res.json(err))
 });
-router.post('/playlist-import', (req, res) => {
-  const uuid = req.user_id || req.headers.user_id || 'Viewly';
+router.post('/playlist-import', utils.auth, (req, res) => {
+  const uuid = req.user.id;
   const youtubePlaylistId = utils.getParameterByName('list', req.body.yt_url);
   if (!youtubePlaylistId) res.json({success: false, reason: "Youtube playlist url not valid"});
   else {
@@ -61,8 +61,8 @@ router.post('/playlist-import', (req, res) => {
     }).catch(err => res.json(err))
   }
 });
-router.post('/add-video', (req, res) => {
-  const uuid = req.user_id || req.headers.user_id || 'Viewly';
+router.post('/add-video', utils.auth, (req, res) => {
+  const uuid = req.user.id;
   if (!req.body.playlist_id) res.json({success: false, reason: "playlist_id is mandatory"});
   else {
     video.addVideoToPlaylist(uuid, req.body).then((data) => {
@@ -70,15 +70,15 @@ router.post('/add-video', (req, res) => {
     }).catch(err => res.json(err))
   }
 });
-router.post('/remove-video', (req, res) => {
-  const uuid = req.user_id || req.headers.user_id || 'Viewly';
+router.post('/remove-video', utils.auth, (req, res) => {
+  const uuid = req.user.id;
   video.deleteVideo(uuid, req.body.playlist_id, req.body.video_id).then(data => {
     res.json({success: true})
   }).catch(err => res.json(err))
 });
 
-router.get('/video-prefill', (req, res) => {
-  const uuid = req.user_id || req.headers.user_id || 'Viewly';
+router.get('/video-prefill', utils.auth, (req, res) => {
+  const uuid = req.user.id;
   const url = utils.getParameterByName('v', req.query.url);
   if (!url) res.json({success: false, reason: 'URL is a mandatory query param'});
   else {
@@ -95,8 +95,8 @@ router.get('/categories', (req, res) => {
   }).catch(err => res.json(err));
 });
 
-router.put('/video', (req, res) => {
-  const uuid = req.user_id || req.headers.user_id || 'Viewly';
+router.put('/video', utils.auth, (req, res) => {
+  const uuid = req.user.id;
   video.updateVideo(uuid, req.body).then(data => {
     res.json({success: true})
   }).catch(err => res.json(err))
