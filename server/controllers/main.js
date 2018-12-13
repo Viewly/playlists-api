@@ -25,15 +25,15 @@ router.get('/playlist/:playlist_id', utils.authOptional, async (req, res) => {
   }).catch(err => res.json(err))
 });
 
-router.post('/playlist', async (req, res) => {
-  const uuid = req.user_id || req.headers.user_id || 'Viewly';
+router.post('/playlist', utils.auth, async (req, res) => {
+  const uuid = req.user.id;
   playlist.createPlaylist(uuid, req.body).then(async (id) => {
     res.json(await playlist.getPlaylist(id));
   }).catch(err => res.json(err))
 });
 
-router.put('/playlist', (req, res) => {
-  const uuid = req.user_id || req.headers.user_id || 'Viewly';
+router.put('/playlist', utils.auth, (req, res) => {
+  const uuid = req.user.id;
   playlist.updatePlaylist(uuid, req.body).then(data => {
     res.json({success: true})
   }).catch(err => res.json(err))

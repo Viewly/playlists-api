@@ -6,8 +6,8 @@ const uuid = require('uuid');
 const moment = require('moment');
 
 function getPlaylists(query, user_id) {
-  let { limit, page, title, hashtags, slug, order, q, bookmarked  }  = query;
-  utils.deleteProps(query, ['page', 'limit', 'title', 'hashtags', 'slug', 'order', 'q', 'bookmarked']);
+  let { limit, page, title, hashtags, slug, order, q, bookmarked, mine  }  = query;
+  utils.deleteProps(query, ['page', 'limit', 'title', 'hashtags', 'slug', 'order', 'q', 'bookmarked', 'mine']);
 
   const fields = [
     'playlist.id as playlist_id',
@@ -72,6 +72,9 @@ function getPlaylists(query, user_id) {
       }
       if (slug) { // Exact search by slug (category shortname)
         tx.andWhere('category.slug', '=', slug);
+      }
+      if (mine) {
+        tx.andWhere('playlist.user_id', '=', user_id);
       }
   })
     .then(data => {
