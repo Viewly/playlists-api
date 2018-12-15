@@ -5,6 +5,8 @@ const jwt = require('jsonwebtoken');
 const youtube = require('../youtube/index');
 const emails = require('../email/index');
 const crm = require('../crm/index');
+//const facebook = require('../login-adapters/facebook/index');
+//console.log(facebook.initializePassportStrategy, "??????")
 
 async function registerOrLoginUserGoogle(code){ //For Google
   const googleUser = await youtube.getUserInfoByCode(code);
@@ -22,56 +24,24 @@ async function registerOrLoginUserGoogle(code){ //For Google
 
 }
 
-async function registerUser(user, platform = 'google'){
+async function registerUser(user){
     const existing = await db.select('*').from('user').where('email', user.email).reduce(helpers.getFirst);
-    if (existing) {
-      user.id = existing.id;
-      if ((existing.g_access_token && user.g_access_token) || user.facebook_id) {
-        return { success: true, user: getCleanUserAndJwt(user) };
+    if (!existing) {
+        const password_hash = user.password ? await helpers.createBcryptHash(user.password): '';
+        const newUser = {
+          id: helpers.generateUuid(),
+          email: user.email,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          password_hash
+        };
 
-      } else if (!existing.g_access_token && user.g_access_token) {
-        await updateUserDetails(user);
-        return { success: true, user: getCleanUserAndJwt(user), message: "Thanks for linking your account with your Youtube account." };
-
-      } else {
-        return { success: false, reason: "User already exists." };
-      }
-    }
-    else {
-        //user.id = helpers.generateUuid();
-
-        let newUser = {};
-        switch (platform) {
-          case 'google':
-            break;
-          case 'facebook':
-            newUser = {
-              email: user.email,
-              email_confirmed: true,
-              first_name: user.name,
-              facebook_id: user.id
-            };
-            break;
-          case 'local':
-            const password_hash = user.password ? await helpers.createBcryptHash(user.password): '';
-            newUser = {
-              email: user.email,
-              first_name: user.first_name,
-              last_name: user.last_name,
-              password_hash
-            };
-            break;
-          case 'twitter':
-            newUser = {}; //TBD
-            break;
-            //sendConfirmEmailLink(user.email)
-        }
-
-        newUser.id = helpers.generateUuid();
         await db.insert(newUser).into('user');
         await createOnboarding(newUser.id);
         Promise.all([emails.sendWelcomeEmail(newUser), crm.createUser(newUser)]);
         return { success: true, user: getCleanUserAndJwt(newUser), registered: true };
+    } else {
+      return { success: false, message: "User already exists." };
     }
 }
 
@@ -89,7 +59,7 @@ async function loginUser(email, password) {
 }
 
 async function resetPasswordRequest(email) {
-  const exists = await userExists(email);
+  const exists = await getUserByEmail(email);
   if (!exists) return { success: false, message: "The provided email does not seem to be registered with us." };
   const uuid = helpers.generateUuid();
   await db.update({
@@ -127,7 +97,7 @@ function confirmEmail(email_confirm_token) {
 }
 
 async function sendConfirmEmailLink(email) {
-  const user = await userExists(email);
+  const user = await getUserByEmail(email);
   if (user) {
     if (!user.email_confirmed) {
       const uuid = helpers.generateUuid();
@@ -191,13 +161,13 @@ function getCleanUserAndJwt(user) {
     last_name: user.last_name,
     created_at: user.created_at,
     avatar_url: user.avatar_url,
-    email_confirmed: user.email_confirmed || !!user.g_access_token
+    email_confirmed: user.email_confirmed
   };
   data.jwt = jwt.sign(data, process.env.JWT_PASSWORD);
   return data;
 }
 
-function userExists(email) {
+function getUserByEmail(email) {
   return db.select('*').from('user').where('email', email).reduce(helpers.getFirst);
 }
 
@@ -229,4 +199,4 @@ async function updateOnboarding(user_id, onboarding){
 async function getOnboarding(user_id){
   return db.select('*').from('onboarding').where('user_id', user_id).reduce(helpers.getFirst);
 }
-module.exports = { updateOnboarding, getOnboarding, registerUser, loginUser, resetPasswordRequest, resetPasswordProcess, registerOrLoginUserGoogle, updateUserPassword, sendConfirmEmailLink, confirmEmail, getUserById, updateUserBasicInfo, changeUserPassword };
+module.exports = { getUserByEmail, getCleanUserAndJwt, updateOnboarding, getOnboarding, registerUser, loginUser, resetPasswordRequest, resetPasswordProcess, registerOrLoginUserGoogle, updateUserPassword, sendConfirmEmailLink, confirmEmail, getUserById, updateUserBasicInfo, changeUserPassword };

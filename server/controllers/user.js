@@ -6,12 +6,12 @@ const youtube = require('../domain/youtube/index');
 const reddit = require('../domain/login-adapters/reddit/index');
 const passport = require('passport');
 
-const authAdapters = {
-  google: youtube,
-  reddit,
-  facebook: passport.authenticate('facebook')//pp.get('/auth/facebook', );
-
-};
+// const authAdapters = {
+//   google: passport.authenticate('google'),
+//   reddit,
+//   facebook: passport.authenticate('facebook')//pp.get('/auth/facebook', );
+//
+// };
 const jwt = require('jsonwebtoken');
 
 
@@ -27,11 +27,12 @@ router.post('/login', (req, res) => {
   }).catch(err => res.json(err))
 });
 
-router.get('/auth', (req, res, next) => passport.authenticate(req.query.platform || 'google', { session: false, scope: 'email' })(req, res, next));
+router.get('/auth', (req, res, next) => passport.authenticate(req.query.platform || 'google', { session: false, scope: ['email'] })(req, res, next));
 router.get('/auth/facebook', (req, res, next) => passport.authenticate('facebook', (err, user, info) => {
-  console.log(err, user, info);
   res.json(user);
-  //res.redirect('/crap?token=123')
+})(req, res, next));
+router.get('/auth/google', (req, res, next) => passport.authenticate('google', (err, user, info) => {
+  res.json(user);
 })(req, res, next));
 // router.get('/auth', (req, res) => {
 //   passport.authenticate(req.query.adapter || 'google', function(err, user, info) {
