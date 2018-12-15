@@ -1,4 +1,5 @@
 const db = require('../../../db/knex');
+const helpers = require('../../utils/helpers');
 
 async function createOrUpdateSourceVideo(user_id, video) {
   const exists = await db.select('*').
@@ -29,6 +30,7 @@ async function addVideoToPlaylist(user_id, video) {
     from('source_video').
     where('youtube_video_id', video.video_id))[0];
 
+  const isOwner = await isOwnerOnPlaylist(user_id, video.playlist_id);
   if (source) {
     const exists = await db.select('*').
       from('video').
@@ -39,6 +41,7 @@ async function addVideoToPlaylist(user_id, video) {
       where('playlist_id', video.playlist_id).
       reduce(i => i[0])).max) || 0;
     if (!exists) {
+      if (!isOwner) return { success: false, reason: 'This playlist is owned by another user.' };
       video.source_video_id = source.id;
       return db.insert({
         user_id: user_id,
@@ -82,8 +85,15 @@ function updateVideo(user_id, video) {
     where({ id: video.id, user_id });
 }
 
-function deleteVideo(user_id, playlist_id, video_id) {
-  return db.from('video').where({ id: video_id, playlist_id, user_id }).del();
+async function deleteVideo(user_id, playlist_id, video_id) {
+  const isOwner = await isOwnerOnPlaylist(user_id, playlist_id);
+  if (!isOwner) return { success: false, reason: "This playlist is owned by another user." };
+  return db.from('video').where({ id: video_id, playlist_id, user_id }).del().then(() => Promise.resolve({success: true}));
+}
+
+async function isOwnerOnPlaylist(user_id, playlist_id) {
+  const playlist = await db.select('*').from("playlist").where('id', playlist_id).reduce(helpers.getFirst);
+  return playlist && playlist.user_id === user_id;
 }
 
 module.exports = {
@@ -92,4 +102,5 @@ module.exports = {
   getVideosForPlaylist,
   updateVideo,
   deleteVideo,
+  isOwnerOnPlaylist
 };

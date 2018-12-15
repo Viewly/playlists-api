@@ -33,8 +33,9 @@ function initializePassportStrategy() {
           await updateUser(user);
           response.message = "Thanks for linking your account with your Facebook account.";
         } else if (!exists) { //Never existed
-          await registerUser(user);
+          user.id = await registerUser(user);
           response.registered = true;
+          users.afterRegisterProcess(user);
         }
         response.user = users.getCleanUserAndJwt(await users.getUserByEmail(user.email));
         response.success = true;
@@ -50,7 +51,8 @@ async function updateUser(user) {
 
 async function registerUser(user){
   user.id = utils.generateUuid();
-  return db.into('user').insert(user);
+  user.alias = user.alias || await utils.getRandomAlias();
+  return db.into('user').insert(user).then(() => Promise.resolve(user.id));
 }
 
 module.exports = { initializePassportStrategy };

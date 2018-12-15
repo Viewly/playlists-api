@@ -35,7 +35,7 @@ router.post('/playlist', utils.auth, async (req, res) => {
 router.put('/playlist', utils.auth, (req, res) => {
   const uuid = req.user.id;
   playlist.updatePlaylist(uuid, req.body).then(data => {
-    res.json({success: true})
+    res.json(data)
   }).catch(err => res.json(err))
 });
 
@@ -74,7 +74,7 @@ router.post('/add-video', utils.auth, (req, res) => {
 router.post('/remove-video', utils.auth, (req, res) => {
   const uuid = req.user.id;
   video.deleteVideo(uuid, req.body.playlist_id, req.body.video_id).then(data => {
-    res.json({success: true})
+    res.json(data)
   }).catch(err => res.json(err))
 });
 

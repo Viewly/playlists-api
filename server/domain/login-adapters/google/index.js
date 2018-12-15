@@ -4,7 +4,6 @@ const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
 const db = require('../../../../db/knex');
 const _ = require('lodash');
-const oAuthCreds = require(`../../youtube/credentials.oauth.${process.env.NODE_ENV || 'staging'}`);
 
 function initializePassportStrategy() {
   console.log("Google passport strategy initialized");
@@ -32,8 +31,9 @@ function initializePassportStrategy() {
         await updateUser(user);
         response.message = "Thanks for linking your account with your Google account.";
       } else if (!exists) { //Never existed
-        await registerUser(user);
+        user.id = await registerUser(user);
         response.registered = true;
+        users.afterRegisterProcess(user);
       }
       response.user = users.getCleanUserAndJwt(await users.getUserByEmail(user.email));
       response.success = true;
@@ -48,7 +48,8 @@ async function updateUser(user) {
 
 async function registerUser(user){
   user.id = utils.generateUuid();
-  return db.into('user').insert(user);
+  user.alias = user.alias || await utils.getRandomAlias();
+  return db.into('user').insert(user).then(() => Promise.resolve(user.id));
 }
 
 module.exports = { initializePassportStrategy };

@@ -217,7 +217,9 @@ async function deletePlaylist(user_id, playlist_id) {
   return true;
 }
 
-async function updatePlaylist(user_id, playlist) {
+async function  updatePlaylist(user_id, playlist) {
+  const isOwner = await video.isOwnerOnPlaylist(user_id, playlist.id);
+  if (!isOwner) return { success: false, reason: 'This playlist is owned by another user.' };
   return db.from('playlist').
     update({
       title: playlist.title,
@@ -230,7 +232,8 @@ async function updatePlaylist(user_id, playlist) {
       hashtags: playlist.hashtags,
       publish_date: playlist.publish_date
     }).where({ user_id, id: playlist.id })
-    .then(() => hashtag.saveHashtags(playlist.hashtags, playlist.id));
+    .then(() => hashtag.saveHashtags(playlist.hashtags, playlist.id))
+    .then(() => Promise.resolve({ success: true }));
 }
 
 async function playlistUuidConvert(playlist_id){
