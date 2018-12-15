@@ -118,8 +118,8 @@ router.put('/info', (req, res) => {
   const user = req.body;
   user.id = req.user.id;
   if (user.id) {
-    users.updateUserBasicInfo(user).then(async () => {
-      res.json({success: true, user: await users.getUserById(req.user.id)});
+    users.updateUserBasicInfo(user).then((data) => {
+      res.json(data);
     }).catch(err => res.json(err))
   } else {
     res.json({success: false, reason: "JWT might not be valid."})

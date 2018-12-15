@@ -33,16 +33,21 @@ async function registerUser(user){
           email: user.email,
           first_name: user.first_name,
           last_name: user.last_name,
-          password_hash
+          password_hash,
+          alias: await helpers.getRandomAlias()
         };
 
         await db.insert(newUser).into('user');
-        await createOnboarding(newUser.id);
-        Promise.all([emails.sendWelcomeEmail(newUser), crm.createUser(newUser)]);
+        afterRegisterProcess(newUser);
         return { success: true, user: getCleanUserAndJwt(newUser), registered: true };
     } else {
       return { success: false, message: "User already exists." };
     }
+}
+
+async function afterRegisterProcess(newUser) {
+  await createOnboarding(newUser.id);
+  return Promise.all([emails.sendWelcomeEmail(newUser), crm.createUser(newUser)]);
 }
 
 async function loginUser(email, password) {
@@ -122,12 +127,19 @@ function updateUserDetails(user) {
   }).where('id', user.id)
 }
 
-function updateUserBasicInfo(user) {
+async function updateUserBasicInfo(user) {
+  if (!user.alias) {
+    return { success: false, message: "Alias cannot be empty." }
+  }
+  const exists = await db.from("user").select('id').where('alias', user.alias).reduce(helpers.getFirst);
+  if (exists) {
+    return { success: false, message: "Alias already taken." }
+  }
   return db.from('user').update({
     first_name: user.first_name,
     last_name: user.last_name,
     avatar_url: user.avatar_url
-  }).where('id', user.id)
+  }).where('id', user.id).then(async () => Promise.resolve({ success: true, user: await getUserById(user.id) }))
 }
 
 function updateUserPassword(user_id, hash){
@@ -161,6 +173,7 @@ function getCleanUserAndJwt(user) {
     last_name: user.last_name,
     created_at: user.created_at,
     avatar_url: user.avatar_url,
+    alias: user.alias,
     email_confirmed: user.email_confirmed
   };
   data.jwt = jwt.sign(data, process.env.JWT_PASSWORD);
@@ -199,4 +212,4 @@ async function updateOnboarding(user_id, onboarding){
 async function getOnboarding(user_id){
   return db.select('*').from('onboarding').where('user_id', user_id).reduce(helpers.getFirst);
 }
-module.exports = { getUserByEmail, getCleanUserAndJwt, updateOnboarding, getOnboarding, registerUser, loginUser, resetPasswordRequest, resetPasswordProcess, registerOrLoginUserGoogle, updateUserPassword, sendConfirmEmailLink, confirmEmail, getUserById, updateUserBasicInfo, changeUserPassword };
+module.exports = { afterRegisterProcess, getUserByEmail, getCleanUserAndJwt, updateOnboarding, getOnboarding, registerUser, loginUser, resetPasswordRequest, resetPasswordProcess, registerOrLoginUserGoogle, updateUserPassword, sendConfirmEmailLink, confirmEmail, getUserById, updateUserBasicInfo, changeUserPassword };

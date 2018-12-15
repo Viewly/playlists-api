@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const uuid = require('uuid');
 const jwt = require('jsonwebtoken');
 const validateUuid = require('uuid-validate');
+const request = require('request');
 
 const getFirst = (_, i) => {
   return i[0];
@@ -80,6 +81,18 @@ function deleteProps(obj, props) {
   })
 }
 
+function getRandomAlias(){
+  return new Promise((resolve) => {
+    request('http://names.drycodes.com/1?nameOptions=games&case=lower', (err, res, body) => {
+      if (err) resolve(generateUuid()[0]);
+      else {
+        body = JSON.parse(body);
+        resolve(body[0]);
+      }
+    })
+  })
+}
+
 module.exports = {
   getFirst,
   getParameterByName,
@@ -91,5 +104,6 @@ module.exports = {
   auth,
   validateUuid,
   deleteProps,
-  authOptional
+  authOptional,
+  getRandomAlias
 };
