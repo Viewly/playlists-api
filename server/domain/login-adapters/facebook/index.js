@@ -10,7 +10,7 @@ function initializePassportStrategy() {
   passport.use(new FacebookStrategy({
       clientID: process.env.FACEBOOK_APP_ID,
       clientSecret: process.env.FACEBOOK_APP_SECRET,
-      callbackURL: "http://localhost:3000/v1/api/user/auth/facebook",
+      callbackURL: process.env.FACEBOOK_CALLBACK_URL || `${process.env.CURRENT_ENDPOINT}/v1/api/user/auth/facebook`,
       profileFields: ['id', 'displayName', 'email', 'picture', 'first_name', 'last_name']
     },
     async (accessToken, refreshToken, profile, cb) => {

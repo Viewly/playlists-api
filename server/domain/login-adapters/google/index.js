@@ -11,8 +11,7 @@ function initializePassportStrategy() {
   passport.use(new GoogleStrategy({
       clientID: process.env.GOOGLE_APP_ID,
       clientSecret: process.env.GOOGLE_APP_SECRET,
-      callbackURL: "http://localhost:3000/v1/api/user/auth/google",
-      //profileFields: ['id', 'displayName', 'email', 'picture', 'first_name', 'last_name']
+      callbackURL: process.env.GOOGLE_CALLBACK_URL || `${process.env.CURRENT_ENDPOINT}/v1/api/user/auth/google`,
     },
     async (accessToken, refreshToken, profile, cb) => {
       profile.email = _.get(profile, 'emails[0].value', '');
