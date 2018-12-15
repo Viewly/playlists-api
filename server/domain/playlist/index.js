@@ -6,8 +6,8 @@ const uuid = require('uuid');
 const moment = require('moment');
 
 function getPlaylists(query, user_id) {
-  let { limit, page, title, hashtags, slug, order, q, bookmarked, mine  }  = query;
-  utils.deleteProps(query, ['page', 'limit', 'title', 'hashtags', 'slug', 'order', 'q', 'bookmarked', 'mine']);
+  let { limit, page, title, hashtags, slug, order, q, bookmarked, mine, alias  }  = query;
+  utils.deleteProps(query, ['page', 'limit', 'title', 'hashtags', 'slug', 'order', 'q', 'bookmarked', 'mine', 'alias']);
 
   const fields = [
     'playlist.id as playlist_id',
@@ -80,6 +80,9 @@ function getPlaylists(query, user_id) {
       }
       if (mine) {
         tx.andWhere('playlist.user_id', '=', user_id);
+      }
+      if (alias) {
+        tx.andWhere('user.alias', '=', alias);
       }
   })
     .then(data => {
