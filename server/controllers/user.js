@@ -34,6 +34,9 @@ router.get('/auth/facebook', (req, res, next) => passport.authenticate('facebook
 router.get('/auth/google', (req, res, next) => passport.authenticate('google', (err, user, info) => {
   res.json(user);
 })(req, res, next));
+router.get('/auth/twitter', (req, res, next) => passport.authenticate('twitter', (err, user, info) => {
+  res.json(user);
+})(req, res, next));
 // router.get('/auth', (req, res) => {
 //   passport.authenticate(req.query.adapter || 'google', function(err, user, info) {
 //     if (err) { return next(err); }
