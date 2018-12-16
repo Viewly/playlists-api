@@ -14,7 +14,7 @@ const express = require('express'),
 
 require('dotenv').config();
 passportStrategies.initializeStrategies();
-//app.use(session({ secret: 'SECRET' })); // session secret
+app.use(session({ secret: 'SECRET' })); // session secret
 app.use(passport.initialize());
 //app.use(passport.session());
 
