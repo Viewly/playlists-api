@@ -9,6 +9,7 @@ const express = require('express'),
   Raven = require('raven'),
   helpers = require('./utils/helpers'),
   passportStrategies = require('./domain/passport/index'),
+  session = require('express-session'),
   passport = require('passport');
 
 require('dotenv').config();
