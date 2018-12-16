@@ -22,9 +22,8 @@ const resetPasswordRequest = [
 ];
 
 const resetPassword = [
-  generalValidators.email,
   generalValidators.password,
-  check('password_reset_token').isUUID()
+  check('password_reset_token').isUUID().withMessage('password_reset_token is required.')
 ];
 
 const confirmEmailRequest = [
@@ -46,7 +45,12 @@ const onboarding = [
   check('step').isInt().optional()
 ];
 
-const validators = {registerUser, loginUser, youtubeLogin, resetPasswordRequest, resetPassword, confirmEmailRequest, confirmEmail, createBookmark, onboarding};
+const updateUserInfo = [
+  check('alias').trim().isLength({ min: 4 }).isString().withMessage('Alias cannot be empty. Must be 4 characters minimum'),
+  check(['first_name', 'last_name', 'avatar_url']).trim().optional().isLength({ min: 3 }).isString(),
+];
+
+const validators = {registerUser, loginUser, youtubeLogin, resetPasswordRequest, resetPassword, confirmEmailRequest, confirmEmail, createBookmark, onboarding, updateUserInfo};
 Object.keys(validators).forEach(key => { validators[key].push(validateErrors, matchData) });
 
 module.exports = validators;

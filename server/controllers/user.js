@@ -31,24 +31,15 @@ router.post('/reset-password-request', userValidators.resetPasswordRequest, (req
 });
 
 router.post('/reset-password', userValidators.resetPassword, (req, res) => {
-  if (!req.body.password_reset_token) {
-    res.json({success: false, reason: "Missing token."})
-  } else if (!req.body.password) {
-    res.json({success: false, reason: "Missing password."})
-  } else {
     users.resetPasswordProcess(req.body.password_reset_token, req.body.password).then(data => {
       res.json(data)
     }).catch(err => res.json(err))
-  }
 });
 
 router.post('/confirm-email-request', userValidators.confirmEmailRequest, (req, res) => {
-  if (!req.body.email) res.json({ success: false, reason: "Email is missing." });
-  else {
     users.sendConfirmEmailLink(req.body.email).then(data => {
       res.json(data);
     }).catch(err => res.json(err))
-  }
 });
 
 router.post('/confirm-email', userValidators.confirmEmail, (req, res) => {
@@ -70,7 +61,7 @@ router.get('/info', (req, res) => {
   }
 });
 
-router.put('/info', (req, res) => {
+router.put('/info', userValidators.updateUserInfo, (req, res) => {
   const user = req.body;
   user.id = req.user.id;
   if (user.id) {

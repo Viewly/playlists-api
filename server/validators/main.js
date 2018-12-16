@@ -4,12 +4,15 @@ const { check, body } = require('express-validator/check');
 const { validateErrors, matchData } = require('./index');
 
 const createPlaylist = [
-  check(['title', 'url', 'hashtags']).trim().isLength({ min: 4 }).isString(),
-  check('description').trim().isLength({ min: 15 }).withMessage('Description must be at least 15 characters.'),
+  //Mandatory below
+  check('title').trim().isLength({ min: 4 }).isString().withMessage('Title is mandatory and must be at least 4 characters.'),
   check('category.id').isInt().withMessage('Category is required. Ex (3)'),
+  //Optional below
+  check(['url', 'hashtags']).trim().optional().isLength({ min: 4 }).isString(),
+  check('description').trim().optional().isLength({ min: 10 }).withMessage('Description must be at least 10 characters.'),
   check('status').optional().isString(),
   check('classification').optional().isString(),
-  check('playlist_thumbnail_url').isURL().withMessage('Must be a valid url').optional({nullable: true}),
+  check('playlist_thumbnail_url').isString().withMessage('Must be a valid url').optional({nullable: true}),
   check('youtube_playlist_id').isString().optional({nullable: true}),
   check('publish_date').optional()
 ];
@@ -43,13 +46,13 @@ const removeVideo = [
 
 const updateVideo = [
   check('id').isInt().withMessage('id is required.'),
-  check('title').isString().trim().optional().isLength({ min: 8 }).withMessage('Title must be at least 8 characters.'),
+  check('title').isString().trim().optional().isLength({ min: 4 }).withMessage('Title must be at least 4 characters.'),
   check('description').isString().trim().optional({ nullable: true }).isLength({ min: 20 }).withMessage('Description must be at least 20 characters.'),
 ];
 
 const uploadFile = [
   check('key').isString().trim().withMessage('key is a required attribute.'),
-  check('type').isUUID().trim().withMessage('type is a required attribute.'),
+  check('type').isString().trim().withMessage('type is a required attribute.'),
 ];
 
 const saveSuggestion = [
