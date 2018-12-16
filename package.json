@@ -43,6 +43,7 @@
     "passport-google-oauth": "^1.0.0",
     "passport-reddit": "^0.2.4",
     "passport-reddit-token": "^2.1.0",
+    "passport-twitter": "^1.0.4",
     "pg": "^7.4.1",
     "raven": "^2.6.3",
     "request": "latest",
