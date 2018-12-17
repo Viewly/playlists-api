@@ -9,13 +9,13 @@ const express = require('express'),
   Raven = require('raven'),
   helpers = require('./utils/helpers'),
   passportStrategies = require('./domain/passport/index'),
-  session = require('express-session'),
+  cookieSession = require('cookie-session'),
   passport = require('passport'),
   Sentry = require('@sentry/node');
 
 require('dotenv').config();
 passportStrategies.initializeStrategies();
-app.use(session({ secret: 'SECRET' })); // session secret
+app.use(cookieSession({ secret: 'SECRET', name: 'session' })); // session secret
 app.use(passport.initialize());
 //app.use(passport.session());
 
