@@ -15,11 +15,12 @@ const express = require('express'),
 
 require('dotenv').config();
 passportStrategies.initializeStrategies();
-//app.use(cookieSession({ keys: ['SECRET', 'SECRET2'], name: 'session', cookie: { secure: true } })); // session secret
-app.use(require('express-session')({ secret: 'keyboard cat', resave: true, saveUninitialized: true }));
+app.use(cookieSession({ keys: ['SECRET', 'SECRET2'], name: 'session', cookie: { secure: true } })); // session secret
+//app.use(require('express-session')({ secret: 'keyboard cat', resave: true, saveUninitialized: true }));
 app.use(passport.initialize());
 app.use(passport.session());
 
+passport.authenticate('session');
 
 const wwwUtils = require('./utils/www.js');
 const mainController = require('./controllers/main');
