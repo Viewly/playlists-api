@@ -5,24 +5,6 @@ const jwt = require('jsonwebtoken');
 const youtube = require('../youtube/index');
 const emails = require('../email/index');
 const crm = require('../crm/index');
-//const facebook = require('../login-adapters/facebook/index');
-//console.log(facebook.initializePassportStrategy, "??????")
-
-async function registerOrLoginUserGoogle(code){ //For Google
-  const googleUser = await youtube.getUserInfoByCode(code);
-
-  let data = await registerUser({
-    email: googleUser.email,
-    first_name: googleUser.given_name,
-    last_name: googleUser.family_name,
-    g_access_token: googleUser.g_access_token,
-    g_refresh_token: googleUser.g_refresh_token,
-    avatar_url: googleUser.picture
-  });
-  data.user = getCleanUserAndJwt(data.user);
-  return data;
-
-}
 
 async function registerUser(user){
     const existing = await db.select('*').from('user').where('email', user.email).reduce(helpers.getFirst);
@@ -54,6 +36,7 @@ async function afterRegisterProcess(newUser) {
 async function loginUser(email, password) {
   const user = await db.select('*').from('user').where('email', email).reduce(helpers.getFirst);
   if (user) {
+    if (!user.password_hash) return {success: false, reason: "You do not have a password set up. Reset your password to continue."};
     const isPasswordValid = await helpers.compareBcryptHash(password, user.password_hash);
     const data = getCleanUserAndJwt(user);
     return !isPasswordValid
@@ -118,28 +101,19 @@ async function sendConfirmEmailLink(email) {
   }
 }
 
-function updateUserDetails(user) {
-  return db.from('user').update({
-    first_name: user.first_name,
-    last_name: user.last_name,
-    g_access_token: user.g_access_token,
-    g_refresh_token: user.g_refresh_token,
-    avatar_url: user.avatar_url
-  }).where('id', user.id)
-}
-
 async function updateUserBasicInfo(user) {
   if (!user.alias) {
     return { success: false, message: "Alias cannot be empty." }
   }
   const exists = await db.from("user").select('id').where('alias', user.alias).reduce(helpers.getFirst);
-  if (exists) {
+  if (exists && exists.id !== user.id) {
     return { success: false, message: "Alias already taken." }
   }
   return db.from('user').update({
     first_name: user.first_name,
     last_name: user.last_name,
-    avatar_url: user.avatar_url
+    avatar_url: user.avatar_url,
+    alias: user.alias
   }).where('id', user.id).then(async () => Promise.resolve({ success: true, user: await getUserById(user.id) }))
 }
 
@@ -213,4 +187,4 @@ async function updateOnboarding(user_id, onboarding){
 async function getOnboarding(user_id){
   return db.select('*').from('onboarding').where('user_id', user_id).reduce(helpers.getFirst);
 }
-module.exports = { afterRegisterProcess, getUserByEmail, getCleanUserAndJwt, updateOnboarding, getOnboarding, registerUser, loginUser, resetPasswordRequest, resetPasswordProcess, registerOrLoginUserGoogle, updateUserPassword, sendConfirmEmailLink, confirmEmail, getUserById, updateUserBasicInfo, changeUserPassword };
+module.exports = { afterRegisterProcess, getUserByEmail, getCleanUserAndJwt, updateOnboarding, getOnboarding, registerUser, loginUser, resetPasswordRequest, resetPasswordProcess, updateUserPassword, sendConfirmEmailLink, confirmEmail, getUserById, updateUserBasicInfo, changeUserPassword };

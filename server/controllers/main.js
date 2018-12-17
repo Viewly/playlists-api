@@ -7,6 +7,7 @@ const common = require('../domain/common/index');
 const reviews = require('../domain/reviews/index');
 const hashtags = require('../domain/hashtags/index');
 const utils = require('../utils/helpers');
+const validators = require('../validators/main');
 
 router.get('/playlists', utils.authOptional, (req, res) => {
   const uuid = req.user ? req.user.id : null;
@@ -25,14 +26,14 @@ router.get('/playlist/:playlist_id', utils.authOptional, async (req, res) => {
   }).catch(err => res.json(err))
 });
 
-router.post('/playlist', utils.auth, async (req, res) => {
+router.post('/playlist', utils.auth, validators.createPlaylist,async (req, res) => {
   const uuid = req.user.id;
   playlist.createPlaylist(uuid, req.body).then(async (id) => {
     res.json(await playlist.getPlaylist(id));
   }).catch(err => res.json(err))
 });
 
-router.put('/playlist', utils.auth, (req, res) => {
+router.put('/playlist', utils.auth, validators.updatePlaylist, (req, res) => {
   const uuid = req.user.id;
   playlist.updatePlaylist(uuid, req.body).then(data => {
     res.json(data)
@@ -52,26 +53,26 @@ router.post('/playlist-reorder/:playlist_id', utils.auth, async (req, res) => {
     res.json({success: true});
   }).catch(err => res.json(err))
 });
-router.post('/playlist-import', utils.auth, (req, res) => {
+
+router.post('/playlist-import', utils.auth, validators.playlistImport, (req, res) => {
   const uuid = req.user.id;
   const youtubePlaylistId = utils.getParameterByName('list', req.body.yt_url);
-  if (!youtubePlaylistId) res.json({success: false, reason: "Youtube playlist url not valid"});
-  else {
-    youtube.importPlaylistFromYoutube(uuid, req.body, youtubePlaylistId).then(() => {
-      res.json({success: true});
-    }).catch(err => res.json(err))
-  }
+  const playlist = req.body;
+  playlist.youtube_playlist_id = youtubePlaylistId;
+  youtube.importPlaylistFromYoutube(uuid, playlist).then(() => {
+    res.json({success: true});
+  }).catch(err => res.json(err))
+
 });
-router.post('/add-video', utils.auth, (req, res) => {
+
+router.post('/add-video', utils.auth, validators.addVideo, (req, res) => {
   const uuid = req.user.id;
-  if (!req.body.playlist_id) res.json({success: false, reason: "playlist_id is mandatory"});
-  else {
-    video.addVideoToPlaylist(uuid, req.body).then((data) => {
-      res.json(data)
-    }).catch(err => res.json(err))
-  }
+  video.addVideoToPlaylist(uuid, req.body).then((data) => {
+    res.json(data)
+  }).catch(err => res.json(err))
+
 });
-router.post('/remove-video', utils.auth, (req, res) => {
+router.post('/remove-video', utils.auth, validators.removeVideo, (req, res) => {
   const uuid = req.user.id;
   video.deleteVideo(uuid, req.body.playlist_id, req.body.video_id).then(data => {
     res.json(data)
@@ -96,7 +97,7 @@ router.get('/categories', (req, res) => {
   }).catch(err => res.json(err));
 });
 
-router.put('/video', utils.auth, (req, res) => {
+router.put('/video', utils.auth, validators.updateVideo, (req, res) => {
   const uuid = req.user.id;
   video.updateVideo(uuid, req.body).then(data => {
     res.json({success: true})
@@ -104,7 +105,7 @@ router.put('/video', utils.auth, (req, res) => {
 });
 
 //Route used to get signed s3 url
-router.post('/upload-file', (req, res) => {
+router.post('/upload-file', validators.uploadFile, (req, res) => {
   thumbnails.getSignedUrl(req.body).then(data => {
     res.json({url: data})
   }).catch(err => res.json(err))
@@ -116,13 +117,13 @@ router.get('/suggestions', (req, res) => {
   }).catch(err => res.json(err))
 });
 
-router.post('/suggestion', (req, res) => {
+router.post('/suggestion', validators.saveSuggestion, (req, res) => {
   common.saveSuggestion(req.body).then(data => {
     res.json({success: true});
   }).catch(err => res.json(err))
 });
 
-router.put('/suggestion', (req, res) => {
+router.put('/suggestion', validators.updateSuggestion, (req, res) => {
   common.updateSuggestion(req.body).then(data => {
     res.json({success: true});
   }).catch(err => res.json(err))
@@ -140,7 +141,7 @@ router.get('/reviews/:playlist_id', (req, res) => {
   }).catch(err => res.json(err))
 });
 //router.use(utils.auth);
-router.post('/review', utils.auth, (req, res) => {
+router.post('/review', [utils.auth, validators.createReview], (req, res) => {
   const uuid = req.user.id;
   reviews.createReview(uuid, req.body).then(data => {
     res.json({success: true});
