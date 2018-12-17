@@ -18,7 +18,7 @@ router.post('/login', (req, res) => {
   }).catch(err => res.json(err))
 });
 
-router.get('/auth', (req, res, next) => passport.authenticate(req.query.platform || 'google', { session: false, scope: ['email'] })(req, res, next));
+router.get('/auth', (req, res, next) => passport.authenticate(req.query.platform || 'google', { session: true, scope: ['email'] })(req, res, next));
 router.get('/auth/:platform', (req, res, next) => passport.authenticate(req.params.platform, (err, user, info) => {
   if (err) {
     console.error(err || info);
