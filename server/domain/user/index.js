@@ -39,6 +39,7 @@ async function registerUser(user){
 
         await db.insert(newUser).into('user');
         afterRegisterProcess(newUser);
+        emails.sendConfirmEmail(newUser);
         return { success: true, user: getCleanUserAndJwt(newUser), registered: true };
     } else {
       return { success: false, message: "User already exists." };
