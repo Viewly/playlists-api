@@ -10,7 +10,8 @@ const express = require('express'),
   helpers = require('./utils/helpers'),
   passportStrategies = require('./domain/passport/index'),
   session = require('express-session'),
-  passport = require('passport');
+  passport = require('passport'),
+  Sentry = require('@sentry/node');
 
 require('dotenv').config();
 passportStrategies.initializeStrategies();
@@ -28,9 +29,9 @@ console.log(process.env.NODE_ENV, "- ENV");
 /**
  * Setup express app
  */
-Raven.config(process.env.SENTRY_DSN).install();
+//Raven.config(process.env.SENTRY_DSN).install();
 const is_live = wwwUtils.shouldRun();
-is_live && app.use(Raven.requestHandler());
+//is_live && app.use(Raven.requestHandler());
 //CORS
 const whitelist = require('./cors_whitelist.json');
 let corsOptions = {
@@ -59,7 +60,10 @@ app.use('/', adminController);
 /**
  * Setup and start http server
  */
-is_live && app.use(Raven.errorHandler());
+is_live && Sentry.init({
+  dsn: process.env.SENTRY_DSN
+});
+
 const server = http.createServer(app).listen(process.env.PORT || 3000);
 server.on('error', wwwUtils.onError);
 server.on('listening', () => wwwUtils.onListening(server));

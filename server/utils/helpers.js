@@ -4,6 +4,7 @@ const uuid = require('uuid');
 const jwt = require('jsonwebtoken');
 const validateUuid = require('uuid-validate');
 const request = require('request');
+const Sentry = require('@sentry/node');
 
 const getFirst = (_, i) => {
   return i[0];
@@ -92,6 +93,12 @@ function getRandomAlias(){
     })
   })
 }
+
+const consoleLog = console.error;
+console.error = function(err) {
+  Sentry.captureException(typeof err === 'string' ? {error: err} : err);
+  consoleLog(err);
+};
 
 module.exports = {
   getFirst,
