@@ -20,7 +20,7 @@ router.post('/login', (req, res) => {
 
 router.get('/auth', (req, res, next) => passport.authenticate(req.query.platform || 'google', { session: false, scope: ['email'] })(req, res, next));
 router.get('/auth/:platform', (req, res, next) => passport.authenticate(req.params.platform, (err, user, info) => {
-  res.json(user);
+  (err) ? res.status(500).json(err || info) : res.json(user);
 })(req, res, next));
 
 router.post('/reset-password-request', (req, res) => {
