@@ -4,6 +4,7 @@ const hashtag = require('../hashtags/index');
 const utils = require('../../utils/helpers');
 const uuid = require('uuid');
 const moment = require('moment');
+const _ = require('lodash');
 
 function getPlaylists(query, user_id) {
   let { limit, page, title, hashtags, slug, order, q, bookmarked, mine, alias  }  = query;
@@ -156,13 +157,15 @@ function getPlaylist(playlist_id, user_id) {
     .leftJoin('user', 'playlist.user_id', 'user.id')
     .modify((q) => {
       if (user_id) {
-        q.leftJoin('bookmark', 'bookmark.playlist_id', 'playlist.id');
+        q.leftJoin('bookmark', 'bookmark.user_id', 'user.id');
       }
     })
-    .where('playlist.id', playlist_id).reduce(i => i[0]),
+    .where('playlist.id', playlist_id).reduce(utils.getFirst),
     video.getVideosForPlaylist(playlist_id),
-    ]).then(data => {
-      const playlist = data[0];
+    db.count('id').from('review').where('playlist_id', playlist_id)
+    ]).then(async (data) => {
+      const playlist = data[0] || {};
+      playlist.comment_count = parseInt(_.get(data, '[2][0].count', 0));
       if (user_id) {
         playlist.bookmarked = !!playlist.bookmark_id;
         delete playlist.bookmark_id;
@@ -181,7 +184,7 @@ function getPlaylist(playlist_id, user_id) {
       };
       utils.deleteProps(playlist, ['category_id', 'category_name', 'category_slug', 'email', 'first_name', 'last_name', 'alias', 'user_id']);
       playlist.videos = data[1];
-      return Promise.resolve(data[0]);
+      return Promise.resolve(playlist);
   });
 }
 
