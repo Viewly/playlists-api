@@ -18,7 +18,7 @@ async function createReview(user_id, review) {
 
 function getReviewsForPlaylist(playlist_id) {
   return db.select('review.*', 'user.first_name', 'user.last_name', 'user.alias', 'user.id', 'user.email').from('review').join('user', 'user.id', 'review.user_id')
-    .where('playlist_id', playlist_id).then((all) => Promise.resolve(all.map(x => {
+    .where('playlist_id', playlist_id).orderBy('review.created_at', 'desc').then((all) => Promise.resolve(all.map(x => {
       const review = x;
       review.user = {
         id: review.user_id,
