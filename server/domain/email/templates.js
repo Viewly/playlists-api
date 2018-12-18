@@ -3,7 +3,7 @@ function confirmEmail(user) {
     'VIDFLOW-CONFIRM',
     'Vidflow email confirmation!',
     user.email,
-    { confirm: `${process.env.CURRENT_ENDPOINT}/confirm-email/${user.email_confirm_token}` },
+    { fname: user.fname, confirm: `${process.env.CURRENT_ENDPOINT}/confirm-email/${user.email_confirm_token}` },
   );
 }
 
@@ -21,7 +21,7 @@ function welcomeEmail(user) {
     'VIDFLOW-WELCOME',
     'Welcome to Vidflow!',
     user.email,
-    { fname: user.first_name, lname: user.last_name },
+    { fname: user.first_name || user.alias, lname: user.last_name || ' ' },
   );
 };
 

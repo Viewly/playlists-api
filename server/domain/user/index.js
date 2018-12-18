@@ -108,7 +108,7 @@ async function sendConfirmEmailLink(email) {
     if (!user.email_confirmed) {
       const uuid = helpers.generateUuid();
       await db.from('user').update('email_confirm_token', uuid).where('email', email);
-      await emails.sendConfirmEmail({email, email_confirm_token: uuid});
+      await emails.sendConfirmEmail({email, fname: user.first_name || user.alias, email_confirm_token: uuid});
       return { success: true, message: "An email with confirmation link has been sent." }
     } else {
       return { success: false, message: "Email already confirmed." }
