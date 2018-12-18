@@ -133,7 +133,7 @@ async function updateUserBasicInfo(user) {
     return { success: false, message: "Username cannot be empty." }
   }
   const exists = await db.from("user").select('id').where('alias', user.alias).reduce(helpers.getFirst);
-  if (exists) {
+  if (exists && exists.id !== user.id) {
     return { success: false, message: "Username already taken." }
   }
   return db.from('user').update({
