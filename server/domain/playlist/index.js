@@ -156,9 +156,12 @@ function getPlaylist(playlist_id, user_id) {
     .leftJoin('category', 'category.id', 'playlist.category_id')
     .leftJoin('user', 'playlist.user_id', 'user.id')
     .modify((q) => {
-      if (user_id) {
-        q.leftJoin('bookmark', 'bookmark.user_id', 'user.id');
+      if (user_id) { //Bookmarks
+        q.leftJoin('bookmark', function() {
+          this.on('bookmark.playlist_id', '=', 'playlist.id').onIn('bookmark.user_id', [ user_id ])
+        });
       }
+
     })
     .where('playlist.id', playlist_id).reduce(utils.getFirst),
     video.getVideosForPlaylist(playlist_id),
