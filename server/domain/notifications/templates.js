@@ -4,6 +4,7 @@ async function commentedOnPlaylist(comment_owner, playlist_id, comment_id) {
   const playlist = (await db.select('*').from('playlist').where('id', playlist_id))[0];
   return {
     template_name: 'playlist_comment_for_owner',
+    playlist_id: playlist.id,
     metadata: {
       playlist_url: playlist.url || playlist.id,
       playlist_id: playlist.id,
