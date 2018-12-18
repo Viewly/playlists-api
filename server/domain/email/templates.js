@@ -27,12 +27,12 @@ function welcomeEmail(user) {
 
 function prepareEmail(template, subject, to, vars) {
   const globalVars = {
-    list_company: 'Viewly Inc.',
+    list_company: 'Vidflow Entertainment Inc.',
   };
   const message = {
     subject: subject,
     from_email: 'info@vidflow.com',
-    from_name: 'Viewly',
+    from_name: 'Vidflow',
     to: [{
       email: to,
       type: 'to'
