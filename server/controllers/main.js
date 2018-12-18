@@ -169,7 +169,7 @@ router.get('/notifications', utils.auth, (req, res) => {
 });
 router.post('/notifications-mark', utils.auth, (req, res) => {
   const uuid = req.user.id;
-  notifications.markAsRead(user_id, req.body).then(data => {
+  notifications.markAsRead(uuid, req.body).then(data => {
     res.json(data);
   }).catch(err => res.json(err))
 });
