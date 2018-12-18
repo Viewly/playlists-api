@@ -10,7 +10,8 @@ async function commentedOnPlaylist(comment_owner, playlist_id, comment_id) {
       playlist_id: playlist.id,
       comment_id,
       comment_owner,
-      playlist_owner: playlist.user_id
+      playlist_owner: playlist.user_id,
+      comment_owner_avatar_url: comment_sender.avatar_url
     },
     title: `${comment_sender.alias || comment_sender.first_name || 'Some mysterious user'} just commented on your playlist ${playlist.title}.`,
     status: 'unread',
@@ -38,7 +39,8 @@ async function commentedOnPlaylistAll(comment_owner, playlist_id, comment_id) {
             playlist_id: playlist.id,
             comment_id,
             comment_owner,
-            playlist_owner: playlist.user_id
+            playlist_owner: playlist.user_id,
+            comment_owner_avatar_url: comment_sender.avatar_url
           },
           title: `${comment_sender.alias || comment_sender.first_name ||
           'Some mysterious user'} just added a comment on the playlist ${playlist.title}.`,
