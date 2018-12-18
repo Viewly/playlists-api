@@ -17,7 +17,7 @@ async function createReview(user_id, review) {
 }
 
 function getReviewsForPlaylist(playlist_id) {
-  return db.select('review.*', 'user.first_name', 'user.last_name', 'user.alias', 'user.id', 'user.email').from('review').join('user', 'user.id', 'review.user_id')
+  return db.select('review.*', 'user.first_name', 'user.last_name', 'user.alias', 'user.id', 'user.email', 'user.avatar_url').from('review').join('user', 'user.id', 'review.user_id')
     .where('playlist_id', playlist_id).orderBy('review.created_at', 'desc').then((all) => Promise.resolve(all.map(x => {
       const review = x;
       review.user = {
@@ -25,10 +25,11 @@ function getReviewsForPlaylist(playlist_id) {
         email: review.email,
         first_name: review.first_name,
         last_name: review.last_name,
-        alias: review.alias
+        alias: review.alias,
+        avatar_url: review.avatar_url
       };
       helpers.deleteProps(review, [
-        'email', 'first_name', 'last_name', 'alias', 'user_id']);
+        'email', 'first_name', 'last_name', 'alias', 'user_id', 'avatar_url']);
       return review;
     })
   ));
