@@ -130,16 +130,17 @@ function updateUserDetails(user) {
 
 async function updateUserBasicInfo(user) {
   if (!user.alias) {
-    return { success: false, message: "Alias cannot be empty." }
+    return { success: false, message: "Username cannot be empty." }
   }
   const exists = await db.from("user").select('id').where('alias', user.alias).reduce(helpers.getFirst);
   if (exists) {
-    return { success: false, message: "Alias already taken." }
+    return { success: false, message: "Username already taken." }
   }
   return db.from('user').update({
     first_name: user.first_name,
     last_name: user.last_name,
-    avatar_url: user.avatar_url
+    avatar_url: user.avatar_url,
+    alias: user.alias
   }).where('id', user.id).then(async () => Promise.resolve({ success: true, user: await getUserById(user.id) }))
 }
 
