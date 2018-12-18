@@ -7,6 +7,7 @@ const common = require('../domain/common/index');
 const reviews = require('../domain/reviews/index');
 const hashtags = require('../domain/hashtags/index');
 const utils = require('../utils/helpers');
+const notifications = require('../domain/notifications/index');
 
 router.get('/playlists', utils.authOptional, (req, res) => {
   const uuid = req.user ? req.user.id : null;
@@ -156,6 +157,19 @@ router.delete('/review/:review_id', utils.auth, (req, res) => {
 
 router.get('/hashtags', (req, res) => {
   hashtags.getHashtags(req.query.limit).then(data => {
+    res.json(data);
+  }).catch(err => res.json(err))
+});
+
+router.get('/notifications', utils.auth, (req, res) => {
+  const uuid = req.user.id;
+  notifications.getNotifications(uuid).then(data => {
+    res.json(data);
+  }).catch(err => res.json(err))
+});
+router.post('/notifications-mark', utils.auth, (req, res) => {
+  const uuid = req.user.id;
+  notifications.markAsRead(user_id, req.body).then(data => {
     res.json(data);
   }).catch(err => res.json(err))
 });

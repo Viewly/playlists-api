@@ -1,13 +1,19 @@
 const db = require('../../../db/knex');
+const notification = require('../notifications/index');
 
-function createReview(user_id, review) {
+async function createReview(user_id, review) {
+
   return db.insert({
     user_id,
     playlist_id: review.playlist_id,
     title: review.title,
     description: review.description,
     rating: review.rating
-  }).into('review');
+  }).into('review').returning('id')
+  .then(async (data) => {
+    const comment_id = data[0];
+    return notification.messages.afterPlaylistComment(user_id, review.playlist_id, comment_id)
+  });
 }
 
 function getReviewsForPlaylist(playlist_id) {
