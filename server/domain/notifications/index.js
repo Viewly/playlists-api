@@ -2,7 +2,7 @@ const db = require('../../../db/knex');
 const templates = require('./templates');
 
 function getNotifications(user_id) {
-  return db.select('*').from('notification').where('user_id', user_id);
+  return db.select('*').from('notification').where('user_id', user_id).orderBy('created_at', 'desc');
 }
 
 function createNotification(notification) {
