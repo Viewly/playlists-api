@@ -31,7 +31,7 @@ function prepareEmail(template, subject, to, vars) {
   };
   const message = {
     subject: subject,
-    from_email: 'info@view.ly',
+    from_email: 'info@vidflow.com',
     from_name: 'Viewly',
     to: [{
       email: to,
