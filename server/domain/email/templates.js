@@ -25,6 +25,15 @@ function welcomeEmail(user) {
   );
 };
 
+function commentActivityEmail(to_email, comment_sender, playlist, comment_id) {
+  return prepareEmail(
+    'VIDFLOW-USER-COMMENTED',
+    `${comment_sender.first_name || comment_sender.alias} commented on the playlist ${playlist.title}`,
+    to_email,
+    { comment_sender_name: comment_sender.first_name || comment_sender.alias,  playlist_name: playlist.title, comment_url: `${process.env.CURRENT_ENDPOINT}/playlist/${playlist.url || playlist.id}/comments?id=${comment_id}`},
+  );
+}
+
 function prepareEmail(template, subject, to, vars) {
   const globalVars = {
     list_company: 'Vidflow Entertainment Inc.',
@@ -72,5 +81,6 @@ function prepareVars(vars) {
 module.exports = {
   confirmEmail,
   resetPasswordEmail,
-  welcomeEmail
+  welcomeEmail,
+  commentActivityEmail
 };
