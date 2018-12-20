@@ -16,7 +16,7 @@ function initializePassportStrategy() {
       },
       async (accessToken, refreshToken, profile, cb) => {
         profile = JSON.parse(profile._raw);
-        const exists = await users.getUserByEmail(profile.email);
+        const exists = (await db.select('*').from('user').where('email', profile.email))[0];
         const user = {
           facebook_access_token: accessToken,
           facebook_refresh_token: refreshToken,

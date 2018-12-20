@@ -14,7 +14,7 @@ function initializePassportStrategy() {
     },
     async (accessToken, refreshToken, profile, cb) => {
       profile.email = _.get(profile, 'emails[0].value', '');
-      const exists = await users.getUserByEmail(profile.email);
+      const exists = (await db.select('*').from('user').where('email', profile.email))[0];
       const user = {
         g_access_token: accessToken,
         g_refresh_token: refreshToken,
