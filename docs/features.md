@@ -85,7 +85,7 @@
 * The review can be deleted by the creator of the review or the administrator of the playlist. 
 When deleted, if the review is on root level and does not have replies, gets deleted permanently, and if its a child review or a root that contains children, gets turned into [deleted by xxxx] and cant be updated. A deleted review has a flag { status: 'deleted' }  
 
-# Delete a review
+# Update a review
 **URL** : `/api/review`
 **Method** : `PUT`
 **Auth required** : YES
