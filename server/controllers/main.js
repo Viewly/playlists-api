@@ -144,14 +144,21 @@ router.get('/reviews/:playlist_id', (req, res) => {
 router.post('/review', utils.auth, (req, res) => {
   const uuid = req.user.id;
   reviews.createReview(uuid, req.body).then(data => {
-    res.json({success: true});
+    res.json(data);
   }).catch(err => res.json(err))
 });
 
 router.delete('/review/:review_id', utils.auth, (req, res) => {
   const uuid = req.user.id;
-  reviews.deleteReview(uuid, req.params.review_id).then(() => {
-    res.json({success: true});
+  reviews.deleteReview(uuid, req.params.review_id).then((data) => {
+    res.json(data);
+  }).catch(err => res.json(err))
+});
+
+router.put('/review', utils.auth, (req, res) => {
+  const uuid = req.user.id;
+  reviews.updateReview(uuid, req.body).then(data => {
+    res.json(data);
   }).catch(err => res.json(err))
 });
 

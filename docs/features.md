@@ -82,6 +82,17 @@
 ## Notes
 * Ex: `/api/review/66254caa-7266-4687-941d-bd55140d7925`
 * The auth token that needs to be sent in every request that requires authentication. Like: `headers["authorization"] = jwt`
+* The review can be deleted by the creator of the review or the administrator of the playlist. 
+When deleted, if the review is on root level and does not have replies, gets deleted permanently, and if its a child review or a root that contains children, gets turned into [deleted by xxxx] and cant be updated. A deleted review has a flag { status: 'deleted' }  
+
+# Delete a review
+**URL** : `/api/review`
+**Method** : `PUT`
+**Auth required** : YES
+## Notes
+* Ex: `/api/review/66254caa-7266-4687-941d-bd55140d7925`
+* The auth token that needs to be sent in every request that requires authentication. Like: `headers["authorization"] = jwt`
+* The review can only be updated by the author of the review. If the review was deleted, it cannot be updated. An updated review has a flag { status: 'edited' }
 
 # Update Onboarding
 **URL** : `/api/user/onboarding`
