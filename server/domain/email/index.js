@@ -15,6 +15,10 @@ function sendWelcomeEmail(user) {
   return sendEmail(templates.welcomeEmail(user))
 }
 
+function sendCommentActivityEmail(to_email, comment_sender, playlist, comment_id) {
+  return sendEmail(templates.commentActivityEmail(to_email, comment_sender, playlist, comment_id))
+}
+
 function sendEmail(email) {
   return new Promise((resolve, reject) => {
     mandrillClient.messages.sendTemplate(
@@ -28,5 +32,6 @@ function sendEmail(email) {
 module.exports = {
   sendConfirmEmail,
   sendResetPasswordEmail,
-  sendWelcomeEmail
+  sendWelcomeEmail,
+  sendCommentActivityEmail
 };
