@@ -18,23 +18,30 @@ async function createReview(user_id, review) {
   });
 }
 
-function getReviewsForPlaylist(playlist_id) {
-  return db.select('review.*', 'user.first_name', 'user.last_name', 'user.alias', 'user.email', 'user.avatar_url').from('review').join('user', 'user.id', 'review.user_id')
-    .where('playlist_id', playlist_id).orderBy('review.created_at', 'desc').then((all) => Promise.resolve(all.map(x => {
-      const review = x;
-      review.user = {
-        id: review.user_id,
-        email: review.email,
-        first_name: review.first_name,
-        last_name: review.last_name,
-        alias: review.alias,
-        avatar_url: review.avatar_url
-      };
-      helpers.deleteProps(review, [
-        'email', 'first_name', 'last_name', 'alias', 'avatar_url']);
-      return review;
-    })
-  ));
+async function getReviewsForPlaylist(user_id, playlist_id) {
+  //const countLikesSub = await db.from('review_likes').count('id').where('review_id', ).as('likes_count');
+  return db.raw(`
+  SELECT review.description, review.id as review_id, parent_id, review.created_at, review.updated_at, review.status,
+  COUNT(DISTINCT review.id) AS comment_count, 
+  (SELECT COUNT(nullif(review_likes.status,1)) FROM review_likes WHERE review_likes.review_id=review.id)  AS dislikes_count, 
+  (SELECT COUNT(nullif(review_likes.status,-1))FROM review_likes WHERE review_likes.review_id=review.id)  AS likes_count,
+  (SELECT status FROM review_likes WHERE review_likes.user_id = '${user_id}' AND review_likes.review_id = review.id) as like_status,
+  json_build_object('email', "user".email, 'alias', "user".alias, 'first_name', "user".first_name, 'avatar_url', "user".avatar_url) userobj
+  FROM review
+  LEFT JOIN review_likes ON review.id=review_likes.review_id 
+  LEFT JOIN "user" ON "user".id = review.user_id
+  WHERE review.playlist_id = '${playlist_id}'
+  GROUP BY review.id, "user".email, "user".alias, "user".first_name, "user".avatar_url;
+    
+  `).then(data => data.rows.map(x => {
+    x.user = x.userobj;
+    delete x.userobj;
+    x.comment_count = parseInt(x.comment_count);
+    x.likes_count = parseInt(x.likes_count);
+    x.dislikes_count = parseInt(x.dislikes_count);
+    x.like_status = x.like_status || 0;
+    return x;
+  }))
 }
 
 async function deleteReview(user_id, review_id) {
@@ -69,4 +76,22 @@ async function updateReview(user_id, review) {
   }
 }
 
-module.exports = { createReview, getReviewsForPlaylist, deleteReview, updateReview  };
+// 0 - nothing, 1 - like, -1 - dislike
+async function likeReview(user_id, review_id, playlist_id, status){
+  const exists = await db.select('*').from('review_likes').where({user_id, playlist_id, review_id}).reduce(helpers.getFirst);
+
+  if (exists) {
+    if (status !== 0) {
+      await db.update({status}).from('review_likes').where({id: exists.id, user_id});
+    } else {
+      await db.del().from('review_likes').where({id: exists.id, user_id});
+    }
+
+  } else {
+    await db.into('review_likes').insert({user_id, review_id, playlist_id, status});
+  }
+  return { success: true };
+}
+
+
+module.exports = { createReview, getReviewsForPlaylist, deleteReview, updateReview, likeReview  };

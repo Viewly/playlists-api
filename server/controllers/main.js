@@ -135,8 +135,9 @@ router.get('/searchlog', (req, res) => {
   }).catch(err => res.json(err))
 });
 
-router.get('/reviews/:playlist_id', (req, res) => {
-  reviews.getReviewsForPlaylist(req.params.playlist_id).then(data => {
+router.get('/reviews/:playlist_id', utils.authOptional, (req, res) => {
+  const uuid = req.user ? req.user.id : null;
+  reviews.getReviewsForPlaylist(uuid, req.params.playlist_id).then(data => {
     res.json(data);
   }).catch(err => res.json(err))
 });
@@ -158,6 +159,14 @@ router.delete('/review/:review_id', utils.auth, (req, res) => {
 router.put('/review', utils.auth, (req, res) => {
   const uuid = req.user.id;
   reviews.updateReview(uuid, req.body).then(data => {
+    res.json(data);
+  }).catch(err => res.json(err))
+});
+
+router.post('/review-like', utils.auth, (req, res) => {
+  const uuid = req.user.id;
+  const { review_id, playlist_id, status = 1 } = req.body;
+  reviews.likeReview(uuid, review_id, playlist_id, status).then(data => {
     res.json(data);
   }).catch(err => res.json(err))
 });
