@@ -19,27 +19,28 @@ async function createReview(user_id, review) {
 }
 
 async function getReviewsForPlaylist(user_id, playlist_id) {
-  //const countLikesSub = await db.from('review_likes').count('id').where('review_id', ).as('likes_count');
+  const user_likes = `(SELECT status FROM review_likes WHERE review_likes.user_id = '${user_id}' AND review_likes.review_id = review.id) as like_status,`;
   return db.raw(`
-  SELECT review.description, review.id as review_id, parent_id, review.created_at, review.updated_at, review.status,
-  COUNT(DISTINCT review.id) AS comment_count, 
+  SELECT review.description, review.id as review_id, parent_id, review.created_at, review.updated_at, review.status, 
   (SELECT COUNT(nullif(review_likes.status,1)) FROM review_likes WHERE review_likes.review_id=review.id)  AS dislikes_count, 
   (SELECT COUNT(nullif(review_likes.status,-1))FROM review_likes WHERE review_likes.review_id=review.id)  AS likes_count,
-  (SELECT status FROM review_likes WHERE review_likes.user_id = '${user_id}' AND review_likes.review_id = review.id) as like_status,
-  json_build_object('email', "user".email, 'alias', "user".alias, 'first_name', "user".first_name, 'avatar_url', "user".avatar_url) userobj
+  ${user_id ? user_likes : ''}
+  json_build_object('user_id', "user".id, 'email', "user".email, 'alias', "user".alias, 'first_name', "user".first_name, 'avatar_url', "user".avatar_url) userobj
   FROM review
   LEFT JOIN review_likes ON review.id=review_likes.review_id 
   LEFT JOIN "user" ON "user".id = review.user_id
   WHERE review.playlist_id = '${playlist_id}'
-  GROUP BY review.id, "user".email, "user".alias, "user".first_name, "user".avatar_url;
+  GROUP BY review.id, "user".id, "user".email, "user".alias, "user".first_name, "user".avatar_url
+  ORDER BY review.created_at DESC;
     
   `).then(data => data.rows.map(x => {
+    x.id = x.review_id;
     x.user = x.userobj;
-    delete x.userobj;
-    x.comment_count = parseInt(x.comment_count);
     x.likes_count = parseInt(x.likes_count);
     x.dislikes_count = parseInt(x.dislikes_count);
     x.like_status = x.like_status || 0;
+    delete x.userobj;
+    delete x.review_id;
     return x;
   }))
 }
