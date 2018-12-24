@@ -48,7 +48,7 @@ async function updateUser(user) {
 
 async function registerUser(user){
   user.id = utils.generateUuid();
-  user.alias = user.alias || await utils.getRandomAlias();
+  user.alias = user.email.split('@')[0];
   return db.into('user').insert(user).then(() => Promise.resolve(user.id));
 }
 
