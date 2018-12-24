@@ -34,7 +34,7 @@ async function registerUser(user){
           first_name: user.first_name,
           last_name: user.last_name,
           password_hash,
-          alias: await helpers.getRandomAlias()
+          alias: user.email.split('@')[0]
         };
 
         await db.insert(newUser).into('user');
