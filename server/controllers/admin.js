@@ -1,11 +1,20 @@
 const router = require('express').Router();
 const path = require('path');
-const user = require('../domain/user/index');
-const reddit = require('../domain/login-adapters/reddit/index');
-const facebook = require('../domain/login-adapters/facebook/index');
+const twitch = require('../domain/twitch/index');
 
 router.get('/managexyz', (req, res) => {
   res.sendFile(path.join(__dirname, '../resources/playlist-website/index.html'))
+});
+const cache = {};
+router.get('/twitch', (req, res) => {
+  if (cache[req.query.username]) res.json(cache[req.query.username]);
+  else {
+    twitch.extractSocialMediaFromPanels(req.query.username).then(data => {
+      cache[req.query.username] = data;
+      res.json(data);
+    }).catch(err => res.json(err))
+  }
+
 });
 
 // router.get('/facebook', (req, res) => {

@@ -9,6 +9,9 @@ const oAuthCreds = require(`./credentials.oauth.${process.env.NODE_ENV || 'stagi
 const playlist = require('../playlist/index');
 const video = require('../video/index');
 const db = require('../../../db/knex');
+const getMeta = require("lets-get-meta");
+const request = require('request');
+
 
 const categories = fs.readFileSync(path.join(__dirname, './categories.txt'), 'utf-8');
 const yt_categories = {};
@@ -146,7 +149,7 @@ function getUserInfoByCode(code){
   return getAccessToken(code).then(tokens => getUserInfo(getAuthClientOauth(tokens)))
 }
 
-function fetchYoutubePlaylistById(playlist_id){
+async function fetchYoutubePlaylistById(playlist_id){
   return new Promise((resolve, reject) => {
     service.playlistItems.list({
       'maxResults': 50,
@@ -160,6 +163,53 @@ function fetchYoutubePlaylistById(playlist_id){
       resolve(response);
     });
   })
+}
+
+async function fetchYoutubeProfileByChannel(youtube_url){
+  const channel_id = await getChannelIdByUrl(youtube_url);
+
+  return new Promise(async(resolve, reject) => {
+    service.channels.list({
+      'part': 'snippet,contentDetails,statistics',
+      'id': channel_id}, async (err, response) => {
+      if (err) {
+        console.log('The API returned an error: ' + err);
+        reject(err);
+      }
+      const result = _.get(response, 'data.items[0]', '');
+      if (!result) resolve({});
+      else {
+        const relatedPlaylists = result.contentDetails.relatedPlaylists;
+        const videos = (await fetchYoutubePlaylistById(relatedPlaylists.likes || relatedPlaylists.favorites || relatedPlaylists.uploads)).data.items;
+        resolve({
+          videos,
+          thumbnail: result.snippet.thumbnails.default.url,
+          title: result.snippet.title,
+          published_at: result.snippet.publishedAt,
+          view_count: result.statistics.viewCount,
+          video_count: result.statistics.viewCount,
+          subscriber_count: result.statistics.subscriberCount,
+          comment_count: result.statistics.commentCount,
+          id: channel_id
+        });
+      }
+    });
+  })
+}
+
+async function getChannelIdByUrl(url) {
+  if (url.includes('channel')){
+    let split = url.split('/');
+    return split[split.findIndex(c => c === 'channel') + 1].split('?')[0];
+  } else {
+    return new Promise((resolve, reject) => {
+      request(url, (err, res, body) => {
+        const meta = getMeta(body);
+        resolve(getChannelIdByUrl(meta['og:url']));
+      })
+    })
+
+  }
 }
 
 async function importPlaylistFromYoutube(user_id, playlistMetadata, youtubePlaylistId){
@@ -187,4 +237,4 @@ async function importPlaylistFromYoutube(user_id, playlistMetadata, youtubePlayl
 }
 
 
-module.exports = { getVideoMetadata, getCategories, getAuthUrl, getUserInfoByCode, importPlaylistFromYoutube };
+module.exports = { fetchYoutubeProfileByChannel, getVideoMetadata, getCategories, getAuthUrl, getUserInfoByCode, importPlaylistFromYoutube };
