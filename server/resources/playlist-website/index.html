@@ -77,11 +77,11 @@
       $scope.importedPlaylist = {};
 
 
-      $scope.loadPlaylists = () => {
+      $scope.loadPlaylists = (title) => {
         clearUploadData();
         $scope.state = 0;
-        let query = user_id === 'Viewly' ? null : { user_id };
-        $http.get(`${serverEndpoint}/playlists?limit=500`, { params: query }).then(data => {
+        let query = !title ? { classification: 'staff_picked', limit: 10 }: { q: title };
+        $http.get(`${serverEndpoint}/playlists`, { params: query }).then(data => {
           $scope.playlists = data.data;
           $scope.calculateVideoNo();
         });
@@ -165,25 +165,7 @@
       };
 
       $scope.updatePlaylist = () => {
-        const videos = $scope.activePlaylist.videos.map((item, index) => ({id: item.id, position:index}));
-        Promise.all([
-          $http.post(`${serverEndpoint}/playlist-reorder/${$scope.activePlaylist.id}`, videos, {
-            headers: { user_id  }
-          }),
-          $http.put(`${serverEndpoint}/playlist`, $scope.activePlaylist, {
-            headers: { user_id  }
-          })
-        ]).then(data => {
-          const d1 = data[0].data;
-          const d2 = data[1].data;
-          if (d1.success && d2.success) {
-            $scope.editPlaylist($scope.activePlaylist);
-          } else {
-            alert(d1.reason || d2.reason || "Error");
-          }
-        })
-
-        .then(data => {
+          $http.put(`/classification`, {playlist_id: $scope.activePlaylist.id, classification: $scope.activePlaylist.classification}).then(data => {
           if (data.data.success) {
             $scope.editPlaylist($scope.activePlaylist);
           } else {
@@ -460,6 +442,7 @@
             <label>Search by anything</label>
             <input placeholder="#something, hidden, published, Cooking.." type="text"  ng-model="search.title" class="form-control">
             <p>Playlists: {{filtered.length}} | Videos: {{calculateVideoNo(filtered || playlists)}} | Duration: {{filterResults.duration}}</p>
+            <button ng-click="loadPlaylists(search.title)" class="btn btn-sm btn-primary">Search</button>
           </div>
         </div>
         <div class="row">
