@@ -252,6 +252,10 @@ async function playlistUuidConvert(playlist_id){
   }
 }
 
+async function updatePlaylistClassificaiton(playlist_id, classification) {
+  return db.from("playlist").update({classification}).where('id', playlist_id);
+}
+
 
 module.exports = {
   getPlaylists,
@@ -260,5 +264,6 @@ module.exports = {
   createPlaylist,
   reorderPlaylist,
   deletePlaylist,
-  playlistUuidConvert
+  playlistUuidConvert,
+  updatePlaylistClassificaiton
 };
