@@ -145,7 +145,8 @@ function getPlaylist(playlist_id, user_id) {
     'email',
     'first_name',
     'last_name',
-    'alias'
+    'alias',
+    'avatar_url'
   ];
   if (user_id) {
     fields.push('bookmark.id as bookmark_id')
@@ -183,9 +184,10 @@ function getPlaylist(playlist_id, user_id) {
         email: playlist.email,
         first_name: playlist.first_name,
         last_name: playlist.last_name,
-        alias: playlist.alias
+        alias: playlist.alias,
+        avatar_url: playlist.avatar_url
       };
-      utils.deleteProps(playlist, ['category_id', 'category_name', 'category_slug', 'email', 'first_name', 'last_name', 'alias', 'user_id']);
+      utils.deleteProps(playlist, ['category_id', 'category_name', 'category_slug', 'email', 'first_name', 'last_name', 'alias', 'user_id', 'avatar_url']);
       playlist.videos = data[1];
       return Promise.resolve(playlist);
   });
