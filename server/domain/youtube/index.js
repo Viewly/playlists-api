@@ -9,6 +9,7 @@ const oAuthCreds = require(`./credentials.oauth.${process.env.NODE_ENV || 'stagi
 const playlist = require('../playlist/index');
 const video = require('../video/index');
 const db = require('../../../db/knex');
+const moment = require('moment');
 
 const categories = fs.readFileSync(path.join(__dirname, './categories.txt'), 'utf-8');
 const yt_categories = {};
@@ -156,7 +157,7 @@ function fetchYoutubePlaylistById(playlist_id){
         console.log('The API returned an error: ' + err);
         reject(err);
       }
-      console.log(response);
+      // console.log(response);
       resolve(response);
     });
   })
@@ -186,5 +187,43 @@ async function importPlaylistFromYoutube(user_id, playlistMetadata, youtubePlayl
   return playlist_id;
 }
 
+async function searchPlaylist(query) {
+  console.log(query)
+  return new Promise((resolve, reject) => {
+    service.search.list({'maxResults': '25',
+      'part': 'snippet',
+      'q': query,
+      'type': 'playlist'},  (err, response) => {
+      if (err) { reject(err); return }
+      const items = _.get(response, 'data.items', []);
+      return Promise.all(items.map(x => {
+        const youtubePlaylistId = x.id.playlistId;
+        const snippet = x.snippet;
+        return db.select('*').from('playlist').where('youtube_playlist_id', youtubePlaylistId).then(data => {
+          if (data.length > 0) {
+            let item = data[0];
+            return playlist.getPlaylist(item.id);
+          } else {
+            return fetchYoutubePlaylistById(youtubePlaylistId).then(async(playlist) => {
+              const videos = playlist.data.items;
+              return Promise.resolve({
+                title: snippet.title,
+                category: {},
+                user: {
+                  alias: 'Vidflow'
+                },
+                description: snippet.description,
+                playlist_thumbnail_url: snippet.thumbnails.high.url || snippet.thumbnails.default.url,
+                youtube_playlist_id: youtubePlaylistId,
+                noVideos: videos.length
+              })
+            });
 
-module.exports = { getVideoMetadata, getCategories, getAuthUrl, getUserInfoByCode, importPlaylistFromYoutube };
+          }
+        })
+      })).then(data => resolve(data));
+    });
+  });
+}
+
+module.exports = { searchPlaylist, getVideoMetadata, getCategories, getAuthUrl, getUserInfoByCode, importPlaylistFromYoutube };
