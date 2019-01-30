@@ -69,11 +69,10 @@ router.post('/confirm-email', (req, res) => {
 });
 
 
-
 router.get('/info', helpers.authOptional, async (req, res) => {
-  const uuid = req.user.id || await users.getUserIdByAlias(req.query.alias);
+  const uuid = req.query.alias ? await users.getUserIdByAlias(req.query.alias) : req.user ? req.user.id : null;
   if (uuid) {
-    users.getUserById(req.user.id).then(user => {
+    users.getUserById(uuid).then(user => {
       if (req.query.alias) { helpers.deleteProps(user, ['email', 'jwt', 'email_confirmed']); }
       res.json(user);
     }).catch(err => res.json(err))
