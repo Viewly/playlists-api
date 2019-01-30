@@ -162,17 +162,17 @@ function fetchYoutubePlaylistById(playlist_id){
   })
 }
 
-async function importPlaylistFromYoutube(user_id, playlistMetadata, youtubePlaylistId){
+async function importPlaylistFromYoutube(user_id, playlist_id, youtubePlaylistId){
   const youtubePlaylist = await fetchYoutubePlaylistById(youtubePlaylistId);
   const videos = youtubePlaylist.data.items;
-  const playlist_id = await playlist.createPlaylist(user_id, {
-    title: playlistMetadata.title,
-    description: playlistMetadata.description,
-    category: playlistMetadata.category,
-    status: playlistMetadata.status || 'hidden',
-    playlist_thumbnail_url: playlistMetadata.playlist_thumbnail_url,
-    youtube_playlist_id: youtubePlaylistId
-  });
+  // const playlist_id = await playlist.createPlaylist(user_id, {
+  //   title: playlistMetadata.title,
+  //   description: playlistMetadata.description,
+  //   category: playlistMetadata.category,
+  //   status: playlistMetadata.status || 'hidden',
+  //   playlist_thumbnail_url: playlistMetadata.playlist_thumbnail_url,
+  //   youtube_playlist_id: youtubePlaylistId
+  // });
   await Promise.all(videos.map(async(i, index) => {
     let videoItem = await getVideoMetadata(i.contentDetails.videoId);
     if (videoItem) {
