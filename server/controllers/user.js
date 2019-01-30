@@ -69,9 +69,9 @@ router.post('/confirm-email', (req, res) => {
   }).catch(err => res.json(err))
 });
 
-router.use(helpers.auth);
 
-router.get('/info', (req, res) => {
+
+router.get('/info', helpers.authOptional, (req, res) => {
   const uuid = req.user.id || req.query.alias;
   if (uuid) {
     users.getUserById(req.user.id).then(user => {
@@ -79,10 +79,10 @@ router.get('/info', (req, res) => {
       res.json(user);
     }).catch(err => res.json(err))
   } else {
-    res.json({success: false, reason: "JWT might not be valid."})
+    res.json({success: false, reason: "JWT might not be valid or alias param is missing."})
   }
 });
-
+router.use(helpers.auth);
 router.put('/info', (req, res) => {
   const user = req.body;
   user.id = req.user.id;
