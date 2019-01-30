@@ -58,7 +58,7 @@ router.post('/playlist-import', utils.auth, (req, res) => {
   const youtubePlaylistId = utils.getParameterByName('list', req.body.yt_url);
   if (!youtubePlaylistId) res.json({success: false, reason: "Youtube playlist url not valid"});
   else {
-    youtube.importPlaylistFromYoutube(uuid, req.body, youtubePlaylistId).then(() => {
+    youtube.importPlaylistFromYoutube(uuid, req.body.playlist_id, youtubePlaylistId).then(() => {
       res.json({success: true});
     }).catch(err => res.json(err))
   }
