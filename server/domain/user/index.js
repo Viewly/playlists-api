@@ -214,4 +214,9 @@ async function updateOnboarding(user_id, onboarding){
 async function getOnboarding(user_id){
   return db.select('*').from('onboarding').where('user_id', user_id).reduce(helpers.getFirst);
 }
-module.exports = { afterRegisterProcess, getUserByEmail, getCleanUserAndJwt, updateOnboarding, getOnboarding, registerUser, loginUser, resetPasswordRequest, resetPasswordProcess, registerOrLoginUserGoogle, updateUserPassword, sendConfirmEmailLink, confirmEmail, getUserById, updateUserBasicInfo, changeUserPassword };
+
+async function getUserIdByAlias(alias) {
+  const user = await db.select('id').from('user').where('alias', alias).reduce(helpers.getFirst);
+  return user ? user.id : null;
+}
+module.exports = { afterRegisterProcess, getUserByEmail, getCleanUserAndJwt, updateOnboarding, getOnboarding, registerUser, loginUser, resetPasswordRequest, resetPasswordProcess, registerOrLoginUserGoogle, updateUserPassword, sendConfirmEmailLink, confirmEmail, getUserById, updateUserBasicInfo, changeUserPassword, getUserIdByAlias };
