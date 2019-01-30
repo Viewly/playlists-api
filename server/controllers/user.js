@@ -5,7 +5,6 @@ const bookmarks = require('../domain/bookmarks/index');
 const passport = require('passport');
 const jwt = require('jsonwebtoken');
 
-
 router.post('/register', (req, res) => {
   users.registerUser(req.body).then(data => {
     res.json(data);
@@ -71,8 +70,8 @@ router.post('/confirm-email', (req, res) => {
 
 
 
-router.get('/info', helpers.authOptional, (req, res) => {
-  const uuid = req.user.id || req.query.alias;
+router.get('/info', helpers.authOptional, async (req, res) => {
+  const uuid = req.user.id || await users.getUserIdByAlias(req.query.alias);
   if (uuid) {
     users.getUserById(req.user.id).then(user => {
       if (req.query.alias) { helpers.deleteProps(user, ['email', 'jwt', 'email_confirmed']); }
