@@ -95,7 +95,7 @@ function getRandomAlias(){
 }
 
 async function get(url) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     request(url, (err, res, body) => {
       if (err) reject(err);
       else {
