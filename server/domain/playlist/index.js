@@ -5,10 +5,11 @@ const utils = require('../../utils/helpers');
 const uuid = require('uuid');
 const moment = require('moment');
 const _ = require('lodash');
+const analytics = require('./analytics');
 
-function getPlaylists(query, user_id) {
-  let { limit, page, title, hashtags, slug, order, q, bookmarked, mine, alias  }  = query;
-  utils.deleteProps(query, ['page', 'limit', 'title', 'hashtags', 'slug', 'order', 'q', 'bookmarked', 'mine', 'alias']);
+async function getPlaylists(query, user_id) {
+  let { limit, page, title, hashtags, slug, order, q, bookmarked, mine, alias, type, category_id  }  = query;
+  utils.deleteProps(query, ['page', 'limit', 'title', 'hashtags', 'slug', 'order', 'q', 'bookmarked', 'mine', 'alias', 'type', 'category_id']);
 
   const fields = [
     'playlist.id as playlist_id',
@@ -37,7 +38,9 @@ function getPlaylists(query, user_id) {
   ];
 
   if (user_id) {
-    fields.push('bookmark.id as bookmark_id')
+    fields.push('bookmark.id as bookmark_id');
+    const user = await db.select('*').from('onboarding').where('user_id', user_id).reduce(utils.getFirst);
+    console.log(user.categories_ids);
   }
 
   return db.select(db.raw(fields.join(','))).from('playlist')
@@ -69,6 +72,20 @@ function getPlaylists(query, user_id) {
         tx.andWhere('playlist.id', 'in', sub);
         let log = {keyword: q};
         await db.insert(log).into('searchlog');
+      }
+      if (type) {
+        let ids = [];
+        switch (type) {
+          case 'featured_monthly':
+            ids = await analytics.getFeaturedPlaylists(30, category_id || 'all', limit);
+            break;
+          case 'featured_weekly':
+            ids = await analytics.getFeaturedPlaylists(10, category_id || 'all', limit);
+            break;
+        }
+        if (ids.length > 0) {
+          tx.andWhere('playlist.url', 'in', ids);
+        }
       }
       if (title) { // ILIKE search by title
         tx.andWhere('playlist.title', 'ILIKE', `%${title}%`);
