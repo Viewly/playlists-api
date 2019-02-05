@@ -94,6 +94,19 @@ function getRandomAlias(){
   })
 }
 
+async function get(url) {
+  return new Promise((resolve) => {
+    request(url, (err, res, body) => {
+      if (err) reject(err);
+      else {
+        body = JSON.parse(body);
+        resolve(body);
+      }
+    })
+  })
+
+}
+
 const consoleLog = console.error;
 console.error = function(err) {
   Sentry.captureException(typeof err === 'string' ? {error: err} : err);
@@ -112,5 +125,6 @@ module.exports = {
   validateUuid,
   deleteProps,
   authOptional,
-  getRandomAlias
+  getRandomAlias,
+  get
 };
