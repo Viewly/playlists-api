@@ -39,8 +39,6 @@ async function getPlaylists(query, user_id) {
 
   if (user_id) {
     fields.push('bookmark.id as bookmark_id');
-    const user = await db.select('*').from('onboarding').where('user_id', user_id).reduce(utils.getFirst);
-    console.log(user.categories_ids);
   }
 
   return db.select(db.raw(fields.join(','))).from('playlist')
