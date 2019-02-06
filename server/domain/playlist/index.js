@@ -43,6 +43,8 @@ async function getPlaylists(query, user_id) {
   let ids = [];
   if (type) {
     ids = await filterIdsFromAnalytics(type, category_id, user_id, limit, page);
+  } else {
+    ids = await filterIdsByProperties(query, q, title, hashtags, limit, page)
   }
 
   return db.select(db.raw(fields.join(','))).from('playlist')
@@ -65,26 +67,7 @@ async function getPlaylists(query, user_id) {
     }
   })
   .modify(async (tx) => {
-      if (Object.keys(query).length > 0) { //General search by attributes
-        let search = {};
-        Object.keys(query).forEach(key => { search['playlist.' + key] = query[key]});
-        tx.andWhere(search);
-      }
-      if (q) {
-        let sub = db.from("playlist").select('id').where('title', 'ILIKE', `%${q}%`)
-        .orWhere('description', 'ILIKE', `%${q}%`)
-        .orWhere('hashtags', 'ILIKE', `%${q}%`);
-        tx.andWhere('playlist.id', 'in', sub);
-        let log = {keyword: q};
-        await db.insert(log).into('searchlog');
-      }
 
-      if (title) { // ILIKE search by title
-        tx.andWhere('playlist.title', 'ILIKE', `%${title}%`);
-      }
-      if (hashtags) { // ILIKE search by hashtags
-        tx.andWhere('playlist.hashtags', 'ILIKE', `%${hashtags}%`);
-      }
       if (slug) { // Exact search by slug (category shortname)
         tx.andWhere('category.slug', '=', slug);
       }
@@ -306,6 +289,33 @@ async function filterIdsFromAnalytics(type, category_id, user_id, limit, page){
        Object.assign(playlist, found);
      });
     return playlists;
+
+}
+
+async function filterIdsByProperties(query, q, title, hashtags, limit, page){
+  return db.select('id', 'url').from('playlist').limit(limit).offset(page * limit).orderBy('created_at', 'desc')
+  .modify(async(tx) => {
+    if (Object.keys(query).length > 0) { //General search by attributes
+      let search = {};
+      Object.keys(query).forEach(key => { search['playlist.' + key] = query[key]});
+      tx.andWhere(search);
+    }
+    if (q) {
+      let sub = db.from("playlist").select('id').where('title', 'ILIKE', `%${q}%`)
+      .orWhere('description', 'ILIKE', `%${q}%`)
+      .orWhere('hashtags', 'ILIKE', `%${q}%`);
+      tx.andWhere('playlist.id', 'in', sub);
+      let log = {keyword: q};
+      await db.insert(log).into('searchlog');
+    }
+
+    if (title) { // ILIKE search by title
+      tx.andWhere('playlist.title', 'ILIKE', `%${title}%`);
+    }
+    if (hashtags) { // ILIKE search by hashtags
+      tx.andWhere('playlist.hashtags', 'ILIKE', `%${hashtags}%`);
+    }
+  })
 
 }
 
