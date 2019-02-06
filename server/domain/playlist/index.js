@@ -40,12 +40,19 @@ async function getPlaylists(query, user_id) {
   if (user_id) {
     fields.push('bookmark.id as bookmark_id');
   }
+  let ids = [];
+  if (type) {
+    ids = await filterIdsFromAnalytics(type, category_id, user_id, limit, page);
+  }  else {
+    ids = await db.select('id', 'url').from('playlist').limit(limit).offset(page * limit).orderBy(`playlist.${order || 'created_at'}`, 'desc');
+  }
 
   return db.select(db.raw(fields.join(','))).from('playlist')
   .leftJoin('video', 'video.playlist_id', 'playlist.id')
   .leftJoin('source_video', 'video.source_video_id', 'source_video.id')
   .leftJoin('category', 'playlist.category_id', 'category.id')
   .leftJoin('user', 'playlist.user_id', 'user.id')
+  .where('playlist.id', 'in', ids.map(x => x.id))
   .orderBy(`playlist.${order || 'created_at'}`, 'desc')
   .modify(async (tx) => {
     if (user_id) { //Bookmarks
@@ -71,20 +78,7 @@ async function getPlaylists(query, user_id) {
         let log = {keyword: q};
         await db.insert(log).into('searchlog');
       }
-      if (type) {
-        let ids = [];
-        switch (type) {
-          case 'featured_monthly':
-            ids = await analytics.getFeaturedPlaylists(30, category_id || 'all', limit);
-            break;
-          case 'featured_weekly':
-            ids = await analytics.getFeaturedPlaylists(10, category_id || 'all', limit);
-            break;
-        }
-        if (ids.length > 0) {
-          tx.andWhere('playlist.url', 'in', ids);
-        }
-      }
+
       if (title) { // ILIKE search by title
         tx.andWhere('playlist.title', 'ILIKE', `%${title}%`);
       }
@@ -136,18 +130,31 @@ async function getPlaylists(query, user_id) {
         if (user_id) {
           playlistMap[id].bookmarked = !!i.bookmark_id
         }
+        if (type) {
+          let found = ids.find(x => x.id === playlistMap[id].id);
+          let playlist = playlistMap[id];
+          if (found) {
+            if (type === 'watch_history') {
+              playlist.watch_time = found.watch_time;
+              playlist.started_watching = found.created_at;
+            } else {
+              playlist.avg_watch_time = found.avg_watch_time;
+              playlist.watch_pct = found.watch_pct;
+            }
+          }
+        }
         if (i.id) {
           playlistMap[id].duration.add(moment.duration(i.duration));
           playlistMap[id].noVideos++;
         }
       });
 
-      const playlists = Object.keys(playlistMap).map(i => {
+      return Object.keys(playlistMap).map(i => {
           let playlist = playlistMap[i];
           playlist.duration = utils.durationToReadable(playlist.duration);
           return Object.assign({id: i}, playlist)
-      }).slice(page * limit, (page + 1) * limit);
-      return Promise.resolve(playlists);
+      });
+
   });
 }
 
@@ -273,6 +280,34 @@ async function updatePlaylistClassificaiton(playlist_id, classification) {
   return db.from("playlist").update({classification}).where('id', playlist_id);
 }
 
+async function filterIdsFromAnalytics(type, category_id, user_id, limit, page){
+
+    let ids = [];
+    switch (type) {
+      case 'featured_monthly':
+        ids = await analytics.getFeaturedPlaylists(30, category_id || 'all', limit);
+        break;
+      case 'featured_weekly':
+        ids = await analytics.getFeaturedPlaylists(10, category_id || 'all', limit);
+        break;
+      case 'watch_history':
+        ids = await analytics.getWatchHistory(user_id, limit);
+        break;
+      case 'new_for_me':
+        const onboarding = await db.select('*').from('onboarding').where('user_id', user_id).reduce(utils.getFirst);
+        let categories_ids = onboarding ? onboarding.categories_ids: [];
+        ids = await db.select('url as playlist_id').from('playlist').whereIn('category_id', categories_ids);
+        break;
+    }
+
+    let playlists = await db.select('id', 'url').from('playlist').limit(limit).offset(page * limit).orderBy('created_at', 'desc').whereIn('url', ids.map(x => x.playlist_id));
+     playlists.forEach(playlist => {
+       let found = ids.find(x => x.playlist_id === playlist.url);
+       Object.assign(playlist, found);
+     });
+    return playlists;
+
+}
 
 module.exports = {
   getPlaylists,

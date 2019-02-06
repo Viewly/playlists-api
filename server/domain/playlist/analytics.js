@@ -8,6 +8,16 @@ async function getFeaturedPlaylists(timeframe, category_id, limit = 10) {
     } catch (ex) {
       console.error(ex);
     }
-    return results.map(x => x.playlist_id);
+    return results;
 }
-module.exports = { getFeaturedPlaylists };
+
+async function getWatchHistory(user_id, limit = 5) {
+  let results = [];
+  try {
+    results = await utils.get(`${analytics_endpoint}/playlist_history/${user_id}?limit=${limit}`);
+  } catch (ex) {
+    console.error(ex);
+  }
+  return results;
+}
+module.exports = { getFeaturedPlaylists, getWatchHistory };

@@ -134,7 +134,7 @@ router.put('/onboarding', (req, res) => {
 router.get('/onboarding', (req, res) => {
   const uuid = req.user.id;
   users.getOnboarding(uuid).then(data => {
-    res.json(data);
+    res.json(data || { success: false, error: "Please onboard first" });
   }).catch(err => res.json(err));
 });
 module.exports = router;
