@@ -43,8 +43,6 @@ async function getPlaylists(query, user_id) {
   let ids = [];
   if (type) {
     ids = await filterIdsFromAnalytics(type, category_id, user_id, limit, page);
-  }  else {
-    ids = await db.select('id', 'url').from('playlist').limit(limit).offset(page * limit).orderBy(`playlist.${order || 'created_at'}`, 'desc');
   }
 
   return db.select(db.raw(fields.join(','))).from('playlist')
@@ -52,7 +50,6 @@ async function getPlaylists(query, user_id) {
   .leftJoin('source_video', 'video.source_video_id', 'source_video.id')
   .leftJoin('category', 'playlist.category_id', 'category.id')
   .leftJoin('user', 'playlist.user_id', 'user.id')
-  .where('playlist.id', 'in', ids.map(x => x.id))
   .orderBy(`playlist.${order || 'created_at'}`, 'desc')
   .modify(async (tx) => {
     if (user_id) { //Bookmarks
@@ -62,6 +59,9 @@ async function getPlaylists(query, user_id) {
       if (bookmarked) {
         tx.andWhere('bookmark.user_id', '=', user_id);
       }
+    }
+    if (ids.length > 0) {
+      tx.where('playlist.id', 'in', ids.map(x => x.id))
     }
   })
   .modify(async (tx) => {
