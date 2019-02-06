@@ -204,11 +204,22 @@ async function updateOnboarding(user_id, onboarding){
     let found = categories.find(x => x.id === i);
     return found.name;
   });
-  return db.update({
-    step: onboarding.step,
-    time_to_spend: onboarding.time_to_spend,
-    categories_ids: JSON.stringify(user.categories_ids)
-  }).from('onboarding').where('user_id', user_id).then(() => crm.updateUser(user));
+  const exists = await db.select('*').from('onboarding').where('user_id', user_id).reduce(helpers.getFirst);
+  if (exists) {
+    return db.update({
+      step: onboarding.step,
+      time_to_spend: onboarding.time_to_spend,
+      categories_ids: JSON.stringify(user.categories_ids)
+    }).from('onboarding').where('user_id', user_id).then(() => crm.updateUser(user));
+  } else {
+    return db.insert({
+      user_id,
+      step: onboarding.step,
+      time_to_spend: onboarding.time_to_spend,
+      categories_ids: JSON.stringify(user.categories_ids)
+    }).into('onboarding').then(() => crm.updateUser(user));
+  }
+
 }
 
 async function getOnboarding(user_id){
