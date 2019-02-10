@@ -44,7 +44,7 @@ async function getPlaylists(query, user_id) {
   if (type) {
     ids = await filterIdsFromAnalytics(type, category_id, user_id, limit, page);
   } else {
-    ids = await filterIdsByProperties(query, q, title, hashtags, user_id, mine, limit, page)
+    ids = await filterIdsByProperties(query, q, title, hashtags, user_id, mine, slug, alias, bookmarked, limit, page)
   }
 
   return db.select(db.raw(fields.join(','))).from('playlist')
@@ -63,15 +63,6 @@ async function getPlaylists(query, user_id) {
       }
     }
     tx.where('playlist.id', 'in', ids.map(x => x.id))
-  })
-  .modify(async (tx) => {
-
-      if (slug) { // Exact search by slug (category shortname)
-        tx.andWhere('category.slug', '=', slug);
-      }
-      if (alias) {
-        tx.andWhere('user.alias', '=', alias);
-      }
   })
     .then(data => {
       const playlistMap = {};
@@ -279,6 +270,7 @@ async function filterIdsFromAnalytics(type, category_id, user_id, limit, page){
     }
 
     let playlists = await db.select('id', 'url').from('playlist').limit(limit).offset(page * limit).orderBy('created_at', 'desc').whereIn('url', ids.map(x => x.playlist_id));
+
      playlists.forEach(playlist => {
        let found = ids.find(x => x.playlist_id === playlist.url);
        Object.assign(playlist, found);
@@ -287,8 +279,21 @@ async function filterIdsFromAnalytics(type, category_id, user_id, limit, page){
 
 }
 
-async function filterIdsByProperties(query, q, title, hashtags, user_id, mine, limit, page){
-  return db.select('id', 'url').from('playlist').limit(limit).offset(page * limit).orderBy('created_at', 'desc')
+async function filterIdsByProperties(query, q, title, hashtags, user_id, mine, slug, alias, bookmarked, limit, page){
+  return db.select('playlist.id', 'playlist.url').from('playlist')
+  .leftJoin('category', 'playlist.category_id', 'category.id')
+  .leftJoin('user', 'playlist.user_id', 'user.id')
+  .limit(limit).offset(page * limit).orderBy('playlist.created_at', 'desc')
+  .modify((tx) => {
+    if (user_id) { //Bookmarks
+      tx.leftJoin('bookmark', function() {
+        this.on('bookmark.playlist_id', '=', 'playlist.id').onIn('bookmark.user_id', [ user_id ])
+      });
+      if (bookmarked) {
+        tx.andWhere('bookmark.user_id', '=', user_id);
+      }
+    }
+  })
   .modify(async(tx) => {
     if (Object.keys(query).length > 0) { //General search by attributes
       let search = {};
@@ -312,6 +317,12 @@ async function filterIdsByProperties(query, q, title, hashtags, user_id, mine, l
     }
     if (user_id && mine) {
       tx.andWhere('playlist.user_id', '=', user_id);
+    }
+    if (slug) { // Exact search by slug (category shortname)
+      tx.andWhere('category.slug', '=', slug);
+    }
+    if (alias) {
+      tx.andWhere('user.alias', '=', alias);
     }
   })
 
