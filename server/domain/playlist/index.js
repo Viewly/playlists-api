@@ -62,9 +62,7 @@ async function getPlaylists(query, user_id) {
         tx.andWhere('bookmark.user_id', '=', user_id);
       }
     }
-    if (ids.length > 0) {
-      tx.where('playlist.id', 'in', ids.map(x => x.id))
-    }
+    tx.where('playlist.id', 'in', ids.map(x => x.id))
   })
   .modify(async (tx) => {
 
