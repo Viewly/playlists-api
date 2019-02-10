@@ -6,9 +6,9 @@ router.get('/managestaffpickedplaylists', (req, res) => {
   res.sendFile(path.join(__dirname, '../resources/playlist-website/index.html'))
 });
 
-router.put('/classification', (req, res) => {
-  const { playlist_id, classification } = req.body;
-  playlist.updatePlaylistClassificaiton(playlist_id, classification).then(data => {
+router.put('/manageplaylist', (req, res) => {
+  const { playlist_id, classification, status } = req.body;
+  playlist.updatePlaylistClassificaiton(playlist_id, classification, status).then(data => {
     res.json({success: !!data});
   }).catch(err => res.json(err))
 });
