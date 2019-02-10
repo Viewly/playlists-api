@@ -254,8 +254,8 @@ async function playlistUuidConvert(playlist_id){
   }
 }
 
-async function updatePlaylistClassificaiton(playlist_id, classification) {
-  return db.from("playlist").update({classification}).where('id', playlist_id);
+async function updatePlaylistClassificaiton(playlist_id, classification, status) {
+  return db.from("playlist").update({classification, status}).where('id', playlist_id);
 }
 
 async function filterIdsFromAnalytics(type, category_id, user_id, limit, page){
