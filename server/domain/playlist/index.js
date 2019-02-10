@@ -8,8 +8,8 @@ const _ = require('lodash');
 const analytics = require('./analytics');
 
 async function getPlaylists(query, user_id) {
-  let { limit, page, title, hashtags, slug, order, q, bookmarked, mine, alias, type, category_id  }  = query;
-  utils.deleteProps(query, ['page', 'limit', 'title', 'hashtags', 'slug', 'order', 'q', 'bookmarked', 'mine', 'alias', 'type', 'category_id']);
+  let { limit, page, title, hashtags, slug, order, q, bookmarked, mine, tag, alias, type, category_id  }  = query;
+  utils.deleteProps(query, ['page', 'limit', 'title', 'hashtags', 'slug', 'order', 'q', 'bookmarked', 'mine', 'tag', 'alias', 'type', 'category_id']);
 
   const fields = [
     'playlist.id as playlist_id',
@@ -42,7 +42,7 @@ async function getPlaylists(query, user_id) {
   }
   let ids = [];
   if (type) {
-    ids = await filterIdsFromAnalytics(type, category_id, user_id, limit, page);
+    ids = await filterIdsFromAnalytics(type, category_id, tag, user_id, limit, page);
   } else {
     ids = await filterIdsByProperties(query, q, title, hashtags, user_id, mine, slug, alias, bookmarked, limit, page)
   }
@@ -249,16 +249,21 @@ async function updatePlaylistClassificaiton(playlist_id, classification, status)
   return db.from("playlist").update({classification, status}).where('id', playlist_id);
 }
 
-async function filterIdsFromAnalytics(type, category_id, user_id, limit, page){
+async function filterIdsFromAnalytics(type, category_id, tag, user_id, limit, page){
 
     let ids = [];
     switch (type) {
       case 'featured_monthly':
-        ids = await analytics.getFeaturedPlaylists(30, category_id || 'all', limit);
+        ids = tag
+          ? await analytics.getFeaturedPlaylistsByTag(30, tag, limit)
+          : await analytics.getFeaturedPlaylists(30, category_id, limit);
         break;
       case 'featured_weekly':
-        ids = await analytics.getFeaturedPlaylists(10, category_id || 'all', limit);
+        ids = tag
+          ? await analytics.getFeaturedPlaylistsByTag(10, tag, limit)
+          : await analytics.getFeaturedPlaylists(10, category_id, limit);
         break;
+
       case 'watch_history':
         ids = await analytics.getWatchHistory(user_id, limit);
         break;
