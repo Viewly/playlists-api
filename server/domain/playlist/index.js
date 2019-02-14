@@ -24,6 +24,8 @@ async function getPlaylists(query, user_id) {
     'playlist.user_id',
     'playlist.status',
     'playlist.classification',
+    'playlist.premium',
+    'playlist.price',
     'playlist.created_at',
     'playlist.publish_date',
     'video.id',
@@ -134,6 +136,8 @@ async function getPlaylists(query, user_id) {
             },
             duration: moment.duration(),
             created_at: i.created_at,
+            premium: i.premium,
+            price: i.price,
             status: i.status,
             hashtags: i.hashtags,
             noVideos: 0,
@@ -185,7 +189,8 @@ function getPlaylist(playlist_id, user_id) {
     'avatar_url'
   ];
   if (user_id) {
-    fields.push('bookmark.id as bookmark_id')
+    fields.push('bookmark.id as bookmark_id');
+    fields.push('purchases.id as purchase_id');
   }
 
   return Promise.all([
