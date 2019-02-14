@@ -49,7 +49,7 @@ async function getPlaylists(query, user_id) {
   if (type) {
     ids = await filterIdsFromAnalytics(type, category_id, tag, user_id, limit, page);
   } else {
-    ids = await filterIdsByProperties(query, q, title, hashtags, user_id, mine, slug, alias, bookmarked, limit, page)
+    ids = await filterIdsByProperties(query, q, title, hashtags, user_id, mine, slug, alias, bookmarked, purchased, limit, page)
   }
 
   return db.select(db.raw(fields.join(','))).from('playlist')
@@ -339,7 +339,7 @@ async function filterIdsFromAnalytics(type, category_id, tag, user_id, limit, pa
 
 }
 
-async function filterIdsByProperties(query, q, title, hashtags, user_id, mine, slug, alias, bookmarked, limit, page){
+async function filterIdsByProperties(query, q, title, hashtags, user_id, mine, slug, alias, bookmarked, purchased, limit, page){
   return db.select('playlist.id', 'playlist.url').from('playlist')
   .leftJoin('category', 'playlist.category_id', 'category.id')
   .leftJoin('user', 'playlist.user_id', 'user.id')
@@ -349,8 +349,14 @@ async function filterIdsByProperties(query, q, title, hashtags, user_id, mine, s
       tx.leftJoin('bookmark', function() {
         this.on('bookmark.playlist_id', '=', 'playlist.id').onIn('bookmark.user_id', [ user_id ])
       });
+      tx.leftJoin('purchases', function() {
+        this.on('purchases.playlist_id', '=', 'playlist.id').onIn('purchases.user_id', [ user_id ])
+      });
       if (bookmarked) {
         tx.andWhere('bookmark.user_id', '=', user_id);
+      }
+      if (purchased) {
+        tx.andWhere('purchases.user_id', '=', user_id);
       }
     }
   })
@@ -383,6 +389,9 @@ async function filterIdsByProperties(query, q, title, hashtags, user_id, mine, s
     }
     if (alias) {
       tx.andWhere('user.alias', '=', alias);
+    }
+    if (purchased) {
+      tx.andWhere('purchases.user_id', '=', user_id);
     }
   })
 

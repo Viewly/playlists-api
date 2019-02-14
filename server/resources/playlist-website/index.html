@@ -165,7 +165,10 @@
       };
 
       $scope.updatePlaylist = () => {
-          $http.put(`/manageplaylist`, {playlist_id: $scope.activePlaylist.id, classification: $scope.activePlaylist.classification, status: $scope.activePlaylist.status}).then(data => {
+          const playlist_id = $scope.activePlaylist.id;
+          const { classification, status, premium, price } = $scope.activePlaylist;
+
+          $http.put(`/manageplaylist`, {playlist_id, classification, status, premium, price}).then(data => {
           if (data.data.success) {
             $scope.editPlaylist($scope.activePlaylist);
           } else {
