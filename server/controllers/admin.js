@@ -7,8 +7,8 @@ router.get('/managestaffpickedplaylists', (req, res) => {
 });
 
 router.put('/manageplaylist', (req, res) => {
-  const { playlist_id, classification, status } = req.body;
-  playlist.updatePlaylistClassificaiton(playlist_id, classification, status).then(data => {
+  const { playlist_id, classification, status, price, premium } = req.body;
+  playlist.updatePlaylistClassificaiton(playlist_id, classification, status, price, premium).then(data => {
     res.json({success: !!data});
   }).catch(err => res.json(err))
 });

@@ -300,8 +300,8 @@ async function playlistUuidConvert(playlist_id){
   }
 }
 
-async function updatePlaylistClassificaiton(playlist_id, classification, status) {
-  return db.from("playlist").update({classification, status}).where('id', playlist_id);
+async function updatePlaylistClassificaiton(playlist_id, classification, status, price, premium) {
+  return db.from("playlist").update({classification, status, price, premium}).where('id', playlist_id);
 }
 
 async function filterIdsFromAnalytics(type, category_id, tag, user_id, limit, page){
