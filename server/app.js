@@ -26,6 +26,7 @@ const wwwUtils = require('./utils/www.js');
 const mainController = require('./controllers/main');
 const userController = require('./controllers/user');
 const adminController = require('./controllers/admin');
+const paymentController = require('./controllers/payment');
 
 console.log(process.env.NODE_ENV, "- ENV");
 /**
@@ -55,6 +56,7 @@ app.use('/app', express.static(path.join(__dirname, '../frontend')));
  */
 app.use('/v1/api', mainController);
 app.use('/v1/api/user', userController);
+app.use('/v1/api/payment', paymentController);
 app.use('/', adminController);
 //app.use(auth.verifyToken()); // Protected endpoints below
 

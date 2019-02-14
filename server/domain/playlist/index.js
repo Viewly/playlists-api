@@ -7,9 +7,11 @@ const moment = require('moment');
 const _ = require('lodash');
 const analytics = require('./analytics');
 
+
 async function getPlaylists(query, user_id) {
-  let { limit, page, title, hashtags, slug, order, q, bookmarked, mine, tag, alias, type, category_id  }  = query;
-  utils.deleteProps(query, ['page', 'limit', 'title', 'hashtags', 'slug', 'order', 'q', 'bookmarked', 'mine', 'tag', 'alias', 'type', 'category_id']);
+  let { limit, page, title, hashtags, slug, order, q, bookmarked, mine, tag, alias, type, category_id, purchased  }  = query;
+  utils.deleteProps(query, ['page', 'limit', 'title', 'hashtags', 'slug', 'order', 'q', 'bookmarked', 'mine', 'tag', 'alias', 'type', 'category_id', 'purchased']);
+
 
   const fields = [
     'playlist.id as playlist_id',
@@ -39,6 +41,7 @@ async function getPlaylists(query, user_id) {
 
   if (user_id) {
     fields.push('bookmark.id as bookmark_id');
+    fields.push('purchases.id as purchase_id');
   }
   let ids = [];
   if (type) {
@@ -58,11 +61,52 @@ async function getPlaylists(query, user_id) {
       tx.leftJoin('bookmark', function() {
         this.on('bookmark.playlist_id', '=', 'playlist.id').onIn('bookmark.user_id', [ user_id ])
       });
+      tx.leftJoin('purchases', function() {
+        this.on('purchases.playlist_id', '=', 'playlist.id').onIn('purchases.user_id', [ user_id ])
+      });
       if (bookmarked) {
         tx.andWhere('bookmark.user_id', '=', user_id);
       }
+      if (purchased) {
+        tx.andWhere('purchases.user_id', '=', user_id);
+      }
     }
     tx.where('playlist.id', 'in', ids.map(x => x.id))
+  })
+  .modify(async (tx) => {
+      if (Object.keys(query).length > 0) { //General search by attributes
+        let search = {};
+        Object.keys(query).forEach(key => { search['playlist.' + key] = query[key]});
+        tx.andWhere(search);
+      }
+      if (q) {
+        let sub = db.from("playlist").select('id').where('title', 'ILIKE', `%${q}%`)
+        .orWhere('description', 'ILIKE', `%${q}%`)
+        .orWhere('hashtags', 'ILIKE', `%${q}%`);
+        tx.andWhere('playlist.id', 'in', sub);
+        let log = {keyword: q};
+        await db.insert(log).into('searchlog');
+      }
+      if (title) { // ILIKE search by title
+        tx.andWhere('playlist.title', 'ILIKE', `%${title}%`);
+      }
+      if (hashtags) { // ILIKE search by hashtags
+        tx.andWhere('playlist.hashtags', 'ILIKE', `%${hashtags}%`);
+      }
+      if (slug) { // Exact search by slug (category shortname)
+        tx.andWhere('category.slug', '=', slug);
+      }
+      if (mine) {
+        tx.andWhere('playlist.user_id', '=', user_id);
+      }
+      if (alias) {
+        tx.andWhere('user.alias', '=', alias);
+      }
+      if (purchased) {
+        tx.andWhere('purchases.user_id', '=', user_id);
+      }
+
+
   })
     .then(data => {
       const playlistMap = {};
@@ -97,7 +141,8 @@ async function getPlaylists(query, user_id) {
           }
         }
         if (user_id) {
-          playlistMap[id].bookmarked = !!i.bookmark_id
+          playlistMap[id].bookmarked = !!i.bookmark_id;
+          playlistMap[id].purchased = !!i.purchase_id;
         }
         if (type) {
           let found = ids.find(x => x.id === playlistMap[id].id);
@@ -152,6 +197,9 @@ function getPlaylist(playlist_id, user_id) {
         q.leftJoin('bookmark', function() {
           this.on('bookmark.playlist_id', '=', 'playlist.id').onIn('bookmark.user_id', [ user_id ])
         });
+        q.leftJoin('purchases', function() {
+          this.on('purchases.playlist_id', '=', 'playlist.id').onIn('purchases.user_id', [ user_id ])
+        });
       }
 
     })
@@ -164,6 +212,8 @@ function getPlaylist(playlist_id, user_id) {
       if (user_id) {
         playlist.bookmarked = !!playlist.bookmark_id;
         delete playlist.bookmark_id;
+        playlist.purchased = !!playlist.purchase_id;
+        delete playlist.purchase_id;
       }
       playlist.category =  {
         id: playlist.category_id,
