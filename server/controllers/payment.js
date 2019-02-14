@@ -25,7 +25,7 @@ router.post('/charge', helpers.auth, async (req, res) => {
         res.json({ success: false, error: err, charge: false });
       } else {
         // send response with charge data
-        await db.insert({playlist_id: req.body.playlist_id, amount_paid: req.body.price, user_id: uuid, 'status': charge.id}).into('purchases');
+        await db.insert({playlist_id: req.body.playlist_id, amount_paid: req.body.price, user_id: uuid, 'purchase_id': charge.id}).into('purchases');
         res.json({ success: true, charge: charge });
       }
     });
