@@ -3,9 +3,9 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const helpers = require('../utils/helpers');
 const db = require('../../db/knex');
 // Create a new charge
-router.post('/charge', helpers.auth, async (req, res) => {
+router.post('/charge', helpers.authOptional, async (req, res) => {
   // Create the charge object with data from the Vue.js client
-  const uuid = req.user.id;
+  const uuid = req.user ? req.user.id : helpers.generateUuid();
   const exists = await db.select('*').from('purchases').where({user_id: uuid, playlist_id: req.body.playlist_id}).reduce(helpers.getFirst);
   const stripeData = req.body.stripeData;
   if (!exists) {
