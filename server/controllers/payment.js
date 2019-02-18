@@ -1,19 +1,21 @@
 const router = require('express').Router();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const helpers = require('../utils/helpers');
+const playlist = require('../domain/playlist/index');
 const db = require('../../db/knex');
 // Create a new charge
 router.post('/charge', helpers.authOptional, async (req, res) => {
   // Create the charge object with data from the Vue.js client
   const uuid = req.user ? req.user.id : helpers.generateUuid();
   const exists = await db.select('*').from('purchases').where({user_id: uuid, playlist_id: req.body.playlist_id}).reduce(helpers.getFirst);
+  const playlist = await playlist.getPlaylist(req.body.playlist_id);
   const stripeData = req.body.stripeData;
   if (!exists) {
     const newCharge = {
       amount: req.body.price * 100, //Cents
       currency: "usd",
       source: stripeData.id, // obtained with Stripe.js on the client side
-      description: `${req.body.playlist_id} bought for ${req.body.price}$.`,
+      description: `${playlist.title || req.body.playlist_id}`,
       receipt_email: stripeData.email,
     };
 
